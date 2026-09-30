@@ -3,10 +3,10 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")" && pwd)
 export BBRV3_UNIVERSAL_ROOT=$ROOT
 export PHASE2_READ_ONLY=1
-usage() { printf '%s\n' 'Usage:' '  bbrv3-universal.sh validate-data' '  bbrv3-universal.sh detect [--fixture DIR]' '  bbrv3-universal.sh dry-run [--profile auto|asia-original|overseas-original|compat-original] [--bandwidth N] [--ram-mb N] [--cpu-count N] [--fixture DIR] [--detail]'; }
+usage() { printf '%s\n' 'Usage:' '  bbrv3-universal.sh validate-data' '  bbrv3-universal.sh detect [--fixture DIR]' '  bbrv3-universal.sh dry-run [options]' '  bbrv3-universal.sh plan-sysctl [--profile PROFILE] [--bandwidth N] [--ram-mb N] [--fixture DIR]' '  bbrv3-universal.sh apply-sysctl [options]' '  bbrv3-universal.sh verify-sysctl [options]' '  bbrv3-universal.sh rollback-sysctl [--transaction ID]' '  bbrv3-universal.sh recover-sysctl'; }
 fixture= profile=auto bandwidth=1000 bandwidth_source=MANUAL_PRESET ram= cpu= detail_mode=NO
 command_name=${1:-}; shift || true
-case $command_name in apply|install|optimize|reboot|rollback) printf 'NOT_IMPLEMENTED_IN_PHASE2\n'; exit 3;; esac
+case $command_name in plan-sysctl|apply-sysctl|verify-sysctl|rollback-sysctl|recover-sysctl) exec "$ROOT/src/sysctl-cli.sh" "$command_name" "$@";; apply|install|optimize|reboot|rollback) printf 'NOT_IMPLEMENTED_IN_PHASE3_SCOPE\n'; exit 3;; esac
 while [[ $# -gt 0 ]]; do
   case $1 in
     --fixture) fixture=$2; shift 2;;

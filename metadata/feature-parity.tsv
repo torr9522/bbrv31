@@ -22,3 +22,9 @@ persistence	bbr_configure_direct	NOT_IMPLEMENTED	persistence
 status	show_detailed_status	NOT_IMPLEMENTED	verify
 Menu31_profiles	Kernel_optimize	DATA_READY	profiles
 Menu66	one_click_optimize	NOT_IMPLEMENTED	orchestration
+sysctl_apply	bbr_configure_direct	PHASE3_READY	apply/sysctl
+sysctl_verify	bbr_configure_direct	PHASE3_READY	verify/sysctl
+sysctl_rollback	bbr_configure_direct	PHASE3_READY	recovery/rollback
+sysctl_conflict_detection	check_and_clean_conflicts	PHASE3_READY	apply/sysctl
+sysctl_ownership	bbr_configure_direct	PHASE3_READY	recovery/ownership
+sysctl_transaction	bbr_configure_direct	PHASE3_READY	core/transaction

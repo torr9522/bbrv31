@@ -1,0 +1,9 @@
+field	meaning
+transaction_id	UTC timestamp plus local random suffix
+state	PREPARED APPLYING VERIFIED APPLY_FAILED VERIFY_FAILED ROLLING_BACK ROLLED_BACK BLOCKING_CONFLICT NOOP
+baseline.tsv	31 effective values before apply
+desired.tsv	31 policy-derived desired rows
+ownership.tsv	owned path status and pre-apply hash
+conflicts.tsv	all declared third-party definitions and classification
+verify.tsv	per-key desired/actual/result
+applied.sha256	hash of generated owned file

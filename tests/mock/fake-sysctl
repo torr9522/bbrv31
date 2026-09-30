@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+values=${MOCK_SYSCTL_VALUES:?}
+get_value() { awk -F= -v k="$1" '$1==k{print substr($0,index($0,"=")+1); found=1; exit} END{exit !found}' "$values"; }
+set_value() { local k=$1 v=$2 tmp; tmp=$(mktemp); awk -F= -v k="$k" -v v="$v" '$1==k{print k"="v; found=1; next} {print} END{if(!found) print k"="v}' "$values" >"$tmp"; mv -f "$tmp" "$values"; }
+case ${1:-} in
+  -n) if [[ ${MOCK_READBACK_KEY:-} == "$2" ]]; then printf '%s\n' "${MOCK_READBACK_VALUE:-DRIFTED}"; else get_value "$2"; fi;;
+  -w) pair=$2; key=${pair%%=*}; value=${pair#*=}; [[ ${MOCK_FAIL_WRITE_KEY:-} != "$key" ]] || exit 1; set_value "$key" "$value"; printf '%s = %s\n' "$key" "$value";;
+  -p) file=$2; while IFS='=' read -r key value; do [[ -z $key || $key == \#* ]] && continue; [[ ${MOCK_FAIL_KEY:-} != "$key" ]] || exit 1; set_value "$key" "$value"; done < <(sed -nE 's/^[[:space:]]*([^#][^=]*)=(.*)$/\1=\2/p' "$file");;
+  *) exit 2;;
+esac

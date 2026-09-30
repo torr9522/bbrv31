@@ -35,7 +35,7 @@ for fixture in "$FIX"/*; do
   grep -q '^system_mutation=NO$' <<<"$o"
 done
 # Mutation tripwire: Phase 2 source may not contain any write-style system command.
-if rg -n -P --glob '*.sh' 'sysctl[[:space:]]+-w|sysctl[[:space:]]+-p|tc[[:space:]]+qdisc[[:space:]]+(add|change|replace|del)|ip[[:space:]]+route[[:space:]]+(add|change|replace|del)|iptables[[:space:]]+-[AIDF]|nft[[:space:]]+(add|delete|flush)|(^|[[:space:];])swapon[[:space:]]+(?!--show(?:=|[[:space:]]))|(^|[[:space:];])swapoff([[:space:]]|$)|(^|[[:space:];])mkswap([[:space:]]|$)|systemctl[[:space:]]+(enable|start|restart)|(^|[[:space:]])(reboot|shutdown)([[:space:]]|$)' "$ROOT/src" "$ROOT/bbrv3-universal.sh"; then
+if rg -n -P --glob '*.sh' 'sysctl[[:space:]]+-w|sysctl[[:space:]]+-p|tc[[:space:]]+qdisc[[:space:]]+(add|change|replace|del)|ip[[:space:]]+route[[:space:]]+(add|change|replace|del)|iptables[[:space:]]+-[AIDF]|nft[[:space:]]+(add|delete|flush)|(^|[[:space:];])swapon[[:space:]]+(?!--show(?:=|[[:space:]]))|(^|[[:space:];])swapoff([[:space:]]|$)|(^|[[:space:];])mkswap([[:space:]]|$)|systemctl[[:space:]]+(enable|start|restart)|(^|[[:space:]])(reboot|shutdown)([[:space:]]|$)' "$ROOT/src/detect" "$ROOT/src/policy" "$ROOT/src/ui" "$ROOT/src/common.sh" "$ROOT/src/loader.sh" "$ROOT/src/dry-run.sh" "$ROOT/bbrv3-universal.sh"; then
   printf 'FAIL mutation command found\n' >&2; exit 1
 fi
 printf 'PASS phase2 integration and mutation tripwire\n'
