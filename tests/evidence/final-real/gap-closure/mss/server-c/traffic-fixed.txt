@@ -1,0 +1,21 @@
+network_plan_version=4A
+qdisc=NOOP
+rps=CANDIDATE
+mss=CANDIDATE
+route=NOOP
+qdisc.decision=NOOP
+qdisc.reason=ALREADY_FQ
+qdisc.interface=bbrv3-mss-lr
+rps.decision=CANDIDATE
+rps.reason=SINGLE_RX_QUEUE_WITHOUT_RSS
+mss.decision=CANDIDATE
+mss.reason=NFT_TCPMSS_CLAMP
+mss.backend=nft-only
+route.decision=NOOP
+route.reason=ALREADY_32_32
+route.target=32/32
+system_mutation=NO
+PASS network transaction=20260930T231731Z-2861829458
+PASS product-owned MSS forwarding traffic
+PASS network transaction=20260930T231731Z-2861829458
+PASS product-owned MSS rollback

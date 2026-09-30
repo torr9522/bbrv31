@@ -1,0 +1,21 @@
+BEFORE
+NAME      TYPE      SIZE USED PRIO
+/dev/vda3 partition 976M   0B   -2
+15:# swap was on /dev/vda3 during installation
+16:UUID=21a7e1d3-dffb-4a3c-8a20-0e4afd00606a none            swap    sw              0       0
+               total        used        free      shared  buff/cache   available
+Mem:             953         235         503           4         352         717
+Swap:            975           0         975
+AFTER_SWAPOFF
+thp.decision=CANDIDATE
+thp.target=never
+thp.reason=COMPAT_ORIGINAL
+nofile.decision=COMPAT_CANDIDATE
+nofile.target=524288
+nofile.services=
+nofile.reason=LIMITS_COMPATIBILITY
+swap.decision=CANDIDATE
+swap.reason=NO_EXISTING_SWAP
+vm.decision=DEFER_TO_SYSCTL_PLAN
+vm.reason=PHASE3_OWNED_VALUES
+system_mutation=NO

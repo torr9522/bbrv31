@@ -1,0 +1,33 @@
+network_plan_version=4A
+qdisc=BLOCKED
+rps=REVIEW
+mss=CANDIDATE
+route=SKIP
+qdisc.decision=BLOCKED
+qdisc.reason=UNKNOWN_QDISC_TOPOLOGY
+qdisc.interface=UNKNOWN
+rps.decision=REVIEW
+rps.reason=RPS_FACTS_INCOMPLETE
+mss.decision=CANDIDATE
+mss.reason=NFT_TCPMSS_CLAMP
+mss.backend=nft-only
+route.decision=SKIP
+route.reason=NO_IPV4_DEFAULT
+route.target=32/32
+system_mutation=NO
+PASS network transaction=20260930T225503Z-2781621789
+apply_rc=0
+tx=20260930T225503Z-2781621789
+table inet bbrv3_universal {
+	chain forward {
+		type filter hook forward priority filter; policy accept;
+		tcp flags syn tcp option maxseg size set rt mtu comment "bbrv3-universal:20260930T225503Z-2781621789"
+	}
+}
+PASS network transaction=20260930T225503Z-2234530072
+duplicate_rc=0
+traffic_rc=7
+PASS network rollback
+rollback_rc=0
+table_after_rc=1
+residue=

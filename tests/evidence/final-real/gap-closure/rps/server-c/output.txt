@@ -1,0 +1,32 @@
+network_plan_version=4A
+qdisc=CANDIDATE
+rps=CANDIDATE
+mss=SKIP
+route=CANDIDATE
+qdisc.decision=CANDIDATE
+qdisc.reason=SIMPLE_SINGLE_QUEUE
+qdisc.interface=rps-ns
+rps.decision=CANDIDATE
+rps.reason=SINGLE_RX_QUEUE_WITHOUT_RSS
+mss.decision=SKIP
+mss.reason=NOT_FORWARDING_HOST
+route.decision=CANDIDATE
+route.reason=SINGLE_DEFAULT_ROUTE
+route.target=32/32
+system_mutation=NO
+apply_rc=1
+first_tx=20260930T224745Z-3190020822
+applied_cpus=3
+applied_flow=4096
+transaction=20260930T224745Z-3190020822
+state=VERIFY_FAILED
+qdisc	MATCH
+route	MATCH
+rps	CANDIDATE
+mss	SKIP
+verify_rc=0
+PASS network rollback
+rollback_rc=0
+restored_cpus=0
+restored_flow=0
+residue=

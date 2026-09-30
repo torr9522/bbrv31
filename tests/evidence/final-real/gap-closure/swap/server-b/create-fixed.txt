@@ -1,0 +1,6 @@
+apply_rc=0
+NAME                                     TYPE SIZE USED PRIO
+/var/lib/bbrv3-universal/test-owned.swap file 128M   0B   -2
+600 134217728 /var/lib/bbrv3-universal/test-owned.swap
+18:/var/lib/bbrv3-universal/test-owned.swap none swap sw 0 0 # bbrv3-universal
+20260930T225904Z-4330836

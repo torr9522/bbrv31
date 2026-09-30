@@ -1,0 +1,6 @@
+rollback_rc=0
+NAME      TYPE      SIZE USED PRIO
+/dev/vda3 partition 976M   0B   -2
+owned_file_absent=0
+15:# swap was on /dev/vda3 during installation
+16:UUID=21a7e1d3-dffb-4a3c-8a20-0e4afd00606a none            swap    sw              0       0

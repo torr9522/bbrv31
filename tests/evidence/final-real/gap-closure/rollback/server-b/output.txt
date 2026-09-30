@@ -1,0 +1,20 @@
+PASS apply transaction=20260930T230429Z-676711679
+sys_tx=20260930T230429Z-676711679
+PASS network transaction=20260930T230430Z-963710011
+net_tx=20260930T230430Z-963710011
+normal_sysctl
+normal_network
+PASS network rollback
+normal_network_rc=0
+force_sysctl
+PASS rollback
+force_sysctl_rc=0
+vm_min=45056
+force_network
+force_network_rc=1
+default via 66.245.216.1 dev enp1s0 onlink 
+replay_transaction=20260930T225941Z-2902227312
+PASS network rollback
+force_network_replay_rc=0
+route_after_replay=default via 66.245.216.1 dev enp1s0 onlink
+state_after_replay=ROLLED_BACK
