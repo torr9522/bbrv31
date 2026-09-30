@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
 
 detect_qdisc() {
-    local text='' json=NO iface kind='unknown' mq=NO fq=NO cake=NO htb=NO tbf=NO filters=NO classes=NO
+    local text='' root_text='' json=NO iface kind='unknown' mq=NO fq=NO cake=NO htb=NO tbf=NO filters=NO classes=NO
     if ! available tc; then
         kv qdisc.tc MISSING; kv qdisc.root UNKNOWN; kv qdisc.policy BLOCKED; return
     fi
-    text=$(tc -j qdisc show 2>/dev/null || true)
+    iface=$(ip -4 route show default 2>/dev/null | awk '{for(i=1;i<NF;i++) if($i=="dev"){print $(i+1); exit}}' || true)
+    if [[ -n $iface ]]; then root_text=$(tc qdisc show dev "$iface" 2>/dev/null || true); fi
+    text=${root_text:-$(tc qdisc show 2>/dev/null || true)}
+    [[ -n $iface ]] || iface=UNKNOWN
+    root_text=$(grep -m1 -E '^qdisc[[:space:]]+[^[:space:]]+[[:space:]]+[^[:space:]]+[[:space:]]+root([[:space:]]|$)' <<<"$text" || true)
+    [[ -n $root_text ]] && kind=$(awk '{print $2}' <<<"$root_text")
+    text=$(tc -j qdisc show 2>/dev/null || printf '%s\n' "$text")
     if [[ $text == \[* ]]; then json=YES; else text=$(tc qdisc show 2>/dev/null || true); fi
     while read -r token; do
         case $token in
@@ -19,7 +25,7 @@ detect_qdisc() {
     [[ $kind == mq ]] && mq=YES
     kv qdisc.tc PRESENT
     kv qdisc.json "$json"
-    kv qdisc.interface UNKNOWN
+    kv qdisc.interface "$iface"
     kv qdisc.root "$kind"
     kv qdisc.root_handle UNKNOWN
     kv qdisc.parent ROOT
