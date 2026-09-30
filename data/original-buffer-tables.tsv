@@ -1,0 +1,31 @@
+region	bandwidth_mbps	buffer_mb	behavior
+asia	100	6	exact preset
+asia	200	8	exact preset
+asia	300	10	exact preset
+asia	500	12	exact preset
+asia	700	14	exact preset
+asia	1000	16	exact preset
+asia	1500	20	exact preset
+asia	2000	24	exact preset
+asia	2500	28	exact preset
+asia	<500	8	fallback range
+asia	500-999	12	fallback range
+asia	1000-1999	16	fallback range
+asia	2000-4999	24	fallback range
+asia	5000-9999	28	fallback range
+asia	>=10000	32	fallback range
+asia	invalid	16	invalid input fallback
+overseas	100	8	exact preset
+overseas	200	16	exact preset
+overseas	300	20	exact preset
+overseas	500	32	exact preset
+overseas	700	48	exact preset
+overseas	1000	64	exact preset
+overseas	1500	64	exact preset
+overseas	2000	64	exact preset
+overseas	2500	64	exact preset
+overseas	<500	16	fallback range
+overseas	500-999	48	fallback range
+overseas	1000-1999	64	fallback range
+overseas	>=2000	64	fallback range
+overseas	invalid	64	invalid input fallback

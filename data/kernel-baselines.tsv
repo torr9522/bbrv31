@@ -1,0 +1,2 @@
+release	package_family	cpu_level	status	source
+6.18.54-x64v3-xanmod1	linux-xanmod-x64v3	x86-64-v3	FORMAL_BASELINE	/root/bbrv3-baseline-freeze/BBRv3-Original-Baseline/metadata/BASELINE.env

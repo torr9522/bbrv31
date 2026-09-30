@@ -1,0 +1,32 @@
+id	sysctl_key	original_value_template	source_function	source_line_start	source_line_end	category	notes
+1	net.core.default_qdisc	fq	bbr_configure_direct	1506	1573	CORE_DEFAULT	default queue target
+2	net.ipv4.tcp_congestion_control	bbr	bbr_configure_direct	1506	1573	CORE_DEFAULT	BBRv3 congestion control
+3	net.core.rmem_max	buffer_bytes	bbr_configure_direct	1506	1573	CORE_DEFAULT	dynamic buffer
+4	net.core.wmem_max	buffer_bytes	bbr_configure_direct	1506	1573	CORE_DEFAULT	dynamic buffer
+5	net.ipv4.tcp_rmem	4096 87380 buffer_bytes	bbr_configure_direct	1506	1573	CORE_DEFAULT	dynamic buffer
+6	net.ipv4.tcp_wmem	4096 65536 buffer_bytes	bbr_configure_direct	1506	1573	CORE_DEFAULT	dynamic buffer
+7	net.ipv4.tcp_tw_reuse	1	bbr_configure_direct	1506	1573	CORE_DEFAULT	TIME_WAIT reuse
+8	net.ipv4.ip_local_port_range	1024 65535	bbr_configure_direct	1506	1573	CORE_DEFAULT	port range
+9	net.core.somaxconn	4096	bbr_configure_direct	1506	1573	CORE_DEFAULT	listen queue
+10	net.ipv4.tcp_max_syn_backlog	8192	bbr_configure_direct	1506	1573	CORE_DEFAULT	SYN backlog
+11	net.core.netdev_max_backlog	5000	bbr_configure_direct	1506	1573	CORE_DEFAULT	device backlog
+12	net.ipv4.tcp_slow_start_after_idle	0	bbr_configure_direct	1506	1573	CORE_DEFAULT	slow start behavior
+13	net.ipv4.tcp_mtu_probing	1	bbr_configure_direct	1506	1573	CORE_DEFAULT	MTU probing
+14	net.ipv4.tcp_notsent_lowat	16384	bbr_configure_direct	1506	1573	AUTO_CONDITIONAL	notsent low water mark
+15	net.ipv4.tcp_fin_timeout	15	bbr_configure_direct	1506	1573	AUTO_CONDITIONAL	FIN timeout
+16	net.ipv4.tcp_max_tw_buckets	5000	bbr_configure_direct	1506	1573	AUTO_CONDITIONAL	TIME_WAIT bucket cap
+17	net.ipv4.tcp_fastopen	3	bbr_configure_direct	1506	1573	CORE_DEFAULT	TCP Fast Open
+18	net.ipv4.tcp_keepalive_time	300	bbr_configure_direct	1506	1573	CORE_DEFAULT	keepalive idle
+19	net.ipv4.tcp_keepalive_intvl	30	bbr_configure_direct	1506	1573	CORE_DEFAULT	keepalive interval
+20	net.ipv4.tcp_keepalive_probes	5	bbr_configure_direct	1506	1573	CORE_DEFAULT	keepalive probes
+21	net.ipv4.udp_rmem_min	8192	bbr_configure_direct	1506	1573	CORE_DEFAULT	UDP receive minimum
+22	net.ipv4.udp_wmem_min	8192	bbr_configure_direct	1506	1573	CORE_DEFAULT	UDP send minimum
+23	net.ipv4.tcp_syncookies	1	bbr_configure_direct	1506	1573	CORE_DEFAULT	SYN cookies
+24	vm.swappiness	20<2GB;5>=2GB	bbr_configure_direct	1492	1500	AUTO_CONDITIONAL	original RAM branch
+25	vm.dirty_ratio	20<2GB;15>=2GB	bbr_configure_direct	1493	1500	AUTO_CONDITIONAL	original RAM branch
+26	vm.dirty_background_ratio	5	bbr_configure_direct	1566	1566	AUTO_CONDITIONAL	writeback threshold
+27	vm.overcommit_memory	1	bbr_configure_direct	1567	1567	AUTO_CONDITIONAL	overcommit policy
+28	vm.min_free_kbytes	32768<2GB;65536>=2GB	bbr_configure_direct	1494	1500	AUTO_CONDITIONAL	original RAM branch
+29	vm.vfs_cache_pressure	50	bbr_configure_direct	1569	1569	AUTO_CONDITIONAL	inode/dentry reclaim
+30	kernel.sched_autogroup_enabled	0	bbr_configure_direct	1572	1572	ADVANCED	 scheduler policy
+31	kernel.numa_balancing	0	bbr_configure_direct	1573	1573	ADVANCED	 NUMA policy

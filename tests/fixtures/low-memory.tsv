@@ -1,0 +1,4 @@
+ram_mb	expected_low_memory	expected_swappiness	expected_dirty_ratio	expected_min_free_kbytes
+512	YES	20	20	32768
+1024	YES	20	20	32768
+2048	NO	5	15	65536

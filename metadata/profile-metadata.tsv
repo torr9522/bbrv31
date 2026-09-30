@@ -1,0 +1,8 @@
+profile	source_function	menu	persistent	behavior
+ASIA_ORIGINAL	bbr_configure_direct	3	YES	Asia original buffer table and 31 sysctl
+OVERSEAS_ORIGINAL	bbr_configure_direct	3	YES	Overseas original buffer table and 31 sysctl
+LOW_SPEC	optimize_low_spec	31	NO	Original temporary low-spec profile
+XINCHENDAHAI	optimize_xinchendahai	31	NO	Original temporary profile
+REALITY	optimize_reality_ultimate	31	NO	Original temporary profile
+XINCHENDAHAI_ORIGINAL	optimize_xinchendahai_original	31	NO	Original temporary profile
+COMPAT_ORIGINAL	bbr_configure_direct	3	YES	Parity mode preserving original behavior
