@@ -8,7 +8,7 @@ source "$ROOT/src/apply/network.sh"
 source "$ROOT/src/recovery/network-rollback.sh"
 
 usage() { printf '%s\n' 'Usage:' '  bbrv3-universal.sh plan-network [--fixture DIR] [--detail]' '  bbrv3-universal.sh apply-network [--fixture DIR] [--only RESOURCE]' '  bbrv3-universal.sh verify-network [--transaction ID]' '  bbrv3-universal.sh rollback-network [--transaction ID]' '  bbrv3-universal.sh recover-network'; }
-parse_network_args() { NETWORK_FIXTURE= NETWORK_ONLY= NETWORK_DETAIL=NO NETWORK_TRANSACTION=; while (($#)); do case $1 in --fixture) NETWORK_FIXTURE=$2; shift 2;; --only) NETWORK_ONLY=$2; shift 2;; --detail) NETWORK_DETAIL=YES; shift;; --transaction) NETWORK_TRANSACTION=$2; shift 2;; *) return 2;; esac; done; }
+parse_network_args() { NETWORK_FIXTURE= NETWORK_ONLY= NETWORK_DETAIL=NO NETWORK_TRANSACTION= NETWORK_FORCE_RECOVERY=NO; while (($#)); do case $1 in --fixture) NETWORK_FIXTURE=$2; shift 2;; --only) NETWORK_ONLY=$2; shift 2;; --detail) NETWORK_DETAIL=YES; shift;; --transaction) NETWORK_TRANSACTION=$2; shift 2;; --force-owned) NETWORK_FORCE_RECOVERY=YES; shift;; *) return 2;; esac; done; export NETWORK_FORCE_RECOVERY; }
 collect_network_facts() {
     local out=$1 fixture=${NETWORK_FIXTURE:-} route qroot mq fq cake htb tbf filters classes cpu queues rss forward backend count
     if [[ -n $fixture ]]; then

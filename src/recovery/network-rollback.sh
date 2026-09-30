@@ -5,9 +5,9 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../core" && pwd)/network.sh"
 network_rollback_transaction() {
     local d=$1 state; state=$(<"$d/state"); [[ $state == VERIFIED || $state == APPLY_FAILED || $state == VERIFY_FAILED || $state == DRIFTED ]] || return 1; printf ROLLING_BACK >"$d/state"
     local current desired dev; desired=$(awk -F= '$1=="qdisc.decision"{print $2}' "$d/desired.env"); dev=$(<"$d/interface")
-    if [[ $desired == CANDIDATE ]]; then current=$(network_qdisc_text); grep -Eq '(^|[[:space:]])fq([[:space:]]|$)|"kind"[[:space:]]*:[[:space:]]*"fq"' <<<"$current" || { printf QDISC_DRIFT >&2; printf DRIFTED >"$d/state"; return 1; }; fi
+    if [[ $desired == CANDIDATE && ${NETWORK_FORCE_RECOVERY:-NO} != YES ]]; then current=$(network_qdisc_text); grep -Eq '(^|[[:space:]])fq([[:space:]]|$)|"kind"[[:space:]]*:[[:space:]]*"fq"' <<<"$current" || { printf QDISC_DRIFT >&2; printf DRIFTED >"$d/state"; return 1; }; fi
     desired=$(awk -F= '$1=="route.decision"{print $2}' "$d/desired.env")
-    if [[ $desired == CANDIDATE ]]; then current=$(network_route_text); grep -q 'initcwnd 32' <<<"$current" || { printf ROUTE_DRIFT >&2; printf DRIFTED >"$d/state"; return 1; }; fi
+    if [[ $desired == CANDIDATE ]]; then current=$(network_route_text); if [[ ${NETWORK_FORCE_RECOVERY:-NO} == YES ]]; then local base_id current_id; base_id=$(sed -E 's/[[:space:]]+initcwnd[[:space:]]+[0-9]+//g; s/[[:space:]]+initrwnd[[:space:]]+[0-9]+//g' "$d/route.baseline" | awk '{$1=$1; print}'); current_id=$(sed -E 's/[[:space:]]+initcwnd[[:space:]]+[0-9]+//g; s/[[:space:]]+initrwnd[[:space:]]+[0-9]+//g' <<<"$current" | awk '{$1=$1; print}'); [[ $base_id == "$current_id" ]] || { printf HARD_CONFLICT >&2; printf DRIFTED >"$d/state"; return 1; }; else grep -q 'initcwnd 32' <<<"$current" || { printf ROUTE_DRIFT >&2; printf DRIFTED >"$d/state"; return 1; }; fi; fi
     if [[ $(awk -F= '$1=="qdisc.decision"{print $2}' "$d/desired.env") == CANDIDATE ]]; then
         local base; base=$(awk 'NF{print;exit}' "$d/qdisc.baseline"); [[ $base == *pfifo_fast* || $base == *pfifo* ]] && network_tc_mutation qdisc replace dev "$dev" root pfifo_fast
     fi

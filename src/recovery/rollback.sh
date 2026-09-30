@@ -11,14 +11,16 @@ rollback_transaction() {
     expected=$(awk -F '\t' 'NR==2{print $3}' "$dir/ownership.tsv" 2>/dev/null || true)
     if [[ -e $path ]]; then
         actual=$(hash_file "$path")
-        [[ $actual == $(<"$dir/applied.sha256") ]] || { printf 'FILE_DRIFT\n' >&2; printf 'FILE_DRIFT\n' >"$dir/rollback-error"; return 1; }
+        if [[ ${FORCE_RECOVERY:-NO} != YES ]] || ! owned_marker "$path"; then
+            [[ $actual == $(<"$dir/applied.sha256") ]] || { printf 'FILE_DRIFT\n' >&2; printf 'FILE_DRIFT\n' >"$dir/rollback-error"; return 1; }
+        fi
     else
         printf 'FILE_DRIFT\n' >&2; printf 'FILE_DRIFT\n' >"$dir/rollback-error"; return 1
     fi
     if [[ $state == VERIFIED ]]; then
         while IFS=$'\t' read -r key value; do
             [[ $key == key || -z $key ]] && continue
-            [[ $(sysctl_read "$key" || true) == "$(awk -F '\t' -v k="$key" '$1==k{print $2; exit}' "$dir/desired.tsv")" ]] || { printf 'RUNTIME_DRIFT %s\n' "$key" >&2; printf 'RUNTIME_DRIFT\n' >"$dir/rollback-error"; return 1; }
+            [[ ${FORCE_RECOVERY:-NO} == YES || $(sysctl_read "$key" || true) == "$(awk -F '\t' -v k="$key" '$1==k{print $2; exit}' "$dir/desired.tsv")" ]] || { printf 'RUNTIME_DRIFT %s\n' "$key" >&2; printf 'RUNTIME_DRIFT\n' >"$dir/rollback-error"; return 1; }
         done <"$dir/baseline.tsv"
     fi
     while IFS=$'\t' read -r key value; do
