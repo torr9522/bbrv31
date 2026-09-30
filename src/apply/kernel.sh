@@ -8,7 +8,7 @@ kernel_preflight() {
 }
 kernel_capture_fallback() { local d=${1:-$BBRV3_KERNEL_STATE_ROOT}; mkdir -p "$d"; dpkg-query -W -f='${Package}\t${Version}\n' 'linux-image-*' 2>/dev/null | grep -v xanmod >"$d/fallback-kernels.tsv" || true; [[ -s "$d/fallback-kernels.tsv" ]]; }
 kernel_set_one_shot() { local entry=$1 d=${2:-$BBRV3_KERNEL_STATE_ROOT}; command -v grub-reboot >/dev/null 2>&1 || return 1; grub-reboot "$entry"; grub-editenv /boot/grub/grubenv list >"$d/grubenv.after"; printf ONE_SHOT_READY >"$d/boot-state"; }
-kernel_find_xanmod_entry() { awk '/^[[:space:]]*menuentry .*xanmod1/ { match($0, /\x27([^\x27]+)\x27[[:space:]]*\{/ , m); if (m[1] != "") { print m[1]; exit } }' /boot/grub/grub.cfg 2>/dev/null; }
+kernel_find_xanmod_entry() { sed -n "s/^[[:space:]]*menuentry .*'\\([^']*xanmod[^']*\\)'.*/\\1/p" /boot/grub/grub.cfg 2>/dev/null | head -1; }
 kernel_protect_fallback() { local d=${1:-$BBRV3_KERNEL_STATE_ROOT}; [[ -s "$d/fallback-kernels.tsv" ]] || kernel_capture_fallback "$d"; }
 kernel_install_package() { local pkg=$1 d=${2:-$BBRV3_KERNEL_STATE_ROOT} entry; kernel_preflight; mkdir -p "$d"; kernel_capture_fallback "$d" || return 6; dpkg-deb --info "$pkg" >"$d/package.info"; sha256sum "$pkg" >"$d/package.sha256"; dpkg -i "$pkg"; update-initramfs -u -k all; update-grub; kernel_protect_fallback "$d"; entry=$(kernel_find_xanmod_entry || true); [[ -n $entry ]] || return 7; kernel_set_one_shot "$entry" "$d"; printf '%s\n' "$entry" >"$d/boot-entry"; printf INSTALLED >"$d/state"; }
 kernel_update_package() { kernel_install_package "$@"; }
