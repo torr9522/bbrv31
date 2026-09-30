@@ -12,6 +12,9 @@ ConditionPathExists=/var/lib/bbrv3-universal/persistence/enabled
 [Service]
 Type=oneshot
 ExecStart=/usr/local/sbin/bbrv3-universal reconcile
+
+[Install]
+WantedBy=multi-user.target
 UNIT
 }
 persistence_enable_metadata() { install -d -m 700 "$BBRV3_PERSIST_ROOT"; : >"$BBRV3_PERSIST_ROOT/enabled"; }
