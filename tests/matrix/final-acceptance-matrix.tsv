@@ -1,0 +1,9 @@
+scenario\tcpu\tmemory_mib\tregion\tboot\tnetwork\tswap\tbackend\ttests
+low-512-asia\t1\t512\tAsia\tBIOS\tpfifo_fast\tnone\tiptables-nft\tinstall,resume,sysctl,qdisc,rollback
+low-1g-asia\t1\t1024\tAsia\tUEFI\tfq_codel\texisting-file\tnft-only\tinstall,resume,sysctl,route,thp,nofile,rollback
+low-2g-us-west\t1\t2048\tUS-West\tBIOS\tpfifo_fast\tzram\tiptables-legacy\tcompat-original,swap,rollback
+multi-1g-us-east\t2\t1024\tUS-East\tUEFI\tmq\tnone\tiptables-nft\trps-rfs,mss,persistence,drift
+multi-2g-europe\t2\t2048\tEurope\tBIOS\tmq\texisting-partition\tnft-only\tqdisc-leaf,route,reconcile,rollback
+standard-8g-europe\t4\t8192\tEurope\tUEFI\tmq\tmultiple\tiptables-nft\tkernel-update,rps-rfs,reboot-resume,full-rollback
+secureboot-block\t2\t2048\tAsia\tUEFI-SecureBoot\tfq\texisting\tnft-only\tkernel-block,plan-only
+failure-injection\t2\t2048\tUS-East\tBIOS\tpfifo_fast\tnone\tiptables-nft\tcommand-failure,verify-mismatch,rollback-failure,recovery
