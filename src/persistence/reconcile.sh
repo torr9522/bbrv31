@@ -15,4 +15,16 @@ ExecStart=/usr/local/sbin/bbrv3-universal reconcile
 UNIT
 }
 persistence_enable_metadata() { install -d -m 700 "$BBRV3_PERSIST_ROOT"; : >"$BBRV3_PERSIST_ROOT/enabled"; }
-persistence_reconcile() { printf 'reconcile=OWNED_ONLY\ndrift=DETECT_BEFORE_APPLY\nretry_limit=3\n'; }
+persistence_reconcile() {
+    local root=${ROOT:-${BBRV3_UNIVERSAL_ROOT:-/usr/local/lib/bbrv3-universal}} attempt
+    printf 'reconcile=OWNED_ONLY\ndrift=DETECT_BEFORE_APPLY\nretry_limit=3\n'
+    for attempt in 1 2 3; do
+        if "$root/bbrv3-universal.sh" apply-network && "$root/bbrv3-universal.sh" apply-resources; then
+            printf 'reconcile_result=RECONCILED\nattempt=%s\n' "$attempt"
+            return 0
+        fi
+        sleep "$attempt"
+    done
+    printf 'reconcile_result=FAILED\nattempt=3\n' >&2
+    return 1
+}
