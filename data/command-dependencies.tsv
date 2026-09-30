@@ -1,0 +1,16 @@
+command	requirement	purpose
+bash	REQUIRED	runtime and policy engine
+awk	REQUIRED	structured text parsing
+grep	REQUIRED	structured text parsing
+sed	REQUIRED	fallback parsing
+ip	REQUIRED	network and route detection
+uname	REQUIRED	kernel and architecture detection
+tc	OPTIONAL	qdisc topology detection
+ethtool	OPTIONAL	queue and RSS detection
+systemd-detect-virt	OPTIONAL	virtualization detection
+systemctl	OPTIONAL	systemd and known service detection
+mokutil	OPTIONAL	Secure Boot detection
+iptables	OPTIONAL	iptables capability detection
+nft	OPTIONAL	nftables capability detection
+jq	OPTIONAL	JSON parser for tc/ip output
+swapon	OPTIONAL	swap inventory
