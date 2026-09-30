@@ -1,0 +1,16 @@
+network_plan_version=4A
+qdisc=BLOCKED
+rps=SKIP
+mss=SKIP
+route=CANDIDATE
+qdisc.decision=BLOCKED
+qdisc.reason=UNKNOWN_QDISC_TOPOLOGY
+qdisc.interface=ens17
+rps.decision=SKIP
+rps.reason=SINGLE_CPU
+mss.decision=SKIP
+mss.reason=NOT_FORWARDING_HOST
+route.decision=CANDIDATE
+route.reason=SINGLE_DEFAULT_ROUTE
+route.target=32/32
+system_mutation=NO

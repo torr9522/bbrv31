@@ -1,0 +1,9 @@
+Linux debian 6.18.54-x64v3-xanmod1 #0~20260925.g8bab3e0 SMP PREEMPT_DYNAMIC Fri Sep 25 20:17:14 UTC x86_64 GNU/Linux
+kernel.current=6.18.54-x64v3-xanmod1
+kernel.cpu_level=x86-64-v3
+kernel.boot_mode=BIOS
+kernel.catalog=6.18.54-x64v3-xanmod1
+next_entry=
+PASS apply transaction=20260930T171325Z-900822214
+PASS network transaction=20260930T171327Z-37024743
+one_click=APPLIED

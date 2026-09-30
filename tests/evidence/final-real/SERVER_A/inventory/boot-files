@@ -1,0 +1,7 @@
+/boot/initrd.img-6.1.0-50-amd64
+/boot/vmlinuz-6.1.0-50-amd64
+/boot/System.map-6.1.0-50-amd64
+/boot/config-6.1.0-50-amd64
+/boot/grub/unicode.pf2
+/boot/grub/grub.cfg
+/boot/grub/grubenv

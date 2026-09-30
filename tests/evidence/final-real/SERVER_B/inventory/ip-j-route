@@ -1,0 +1,1 @@
+[{"dst":"default","gateway":"66.245.216.1","dev":"enp1s0","flags":["onlink"]},{"dst":"66.245.216.0/23","dev":"enp1s0","protocol":"kernel","scope":"link","prefsrc":"66.245.216.211","flags":[]}]

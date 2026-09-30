@@ -1,0 +1,1 @@
+[{"dst":"default","gateway":"38.47.105.1","dev":"ens17","flags":["onlink"]},{"dst":"38.47.105.0/24","dev":"ens17","protocol":"kernel","scope":"link","prefsrc":"38.47.105.150","flags":[]}]

@@ -1,0 +1,1 @@
+[{"dst":"default","gateway":"172.26.0.1","dev":"ens5","flags":["onlink"]},{"dst":"172.26.0.0/20","dev":"ens5","protocol":"kernel","scope":"link","prefsrc":"172.26.3.35","flags":[]}]

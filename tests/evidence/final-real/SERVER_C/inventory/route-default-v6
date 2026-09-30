@@ -1,0 +1,1 @@
+default via fe80::4ff:c1ff:fe5b:b00f dev ens5 proto ra metric 1024 expires 1798sec hoplimit 255 pref medium

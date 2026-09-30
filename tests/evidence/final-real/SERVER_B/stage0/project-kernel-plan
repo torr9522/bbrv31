@@ -1,0 +1,3 @@
+kernel.decision=CANDIDATE
+kernel.catalog=6.18.54-x64v3-xanmod1
+kernel.reason=FORMAL_BASELINE

@@ -1,0 +1,40 @@
+profile=ASIA_ORIGINAL
+bandwidth_mbps=1000
+buffer_mb=16
+memory_branch=LT_2G
+sysctl_count=31
+desired keys:
+net.core.default_qdisc	fq	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.ipv4.tcp_congestion_control	bbr	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.core.rmem_max	16777216	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.core.wmem_max	16777216	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.ipv4.tcp_rmem	4096 87380 16777216	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.ipv4.tcp_wmem	4096 65536 16777216	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.ipv4.tcp_tw_reuse	1	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.ipv4.ip_local_port_range	1024 65535	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.core.somaxconn	4096	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.ipv4.tcp_max_syn_backlog	8192	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.core.netdev_max_backlog	5000	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.ipv4.tcp_slow_start_after_idle	0	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.ipv4.tcp_mtu_probing	1	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.ipv4.tcp_notsent_lowat	16384	AUTO_CONDITIONAL	bbr_configure_direct	1506	1573
+net.ipv4.tcp_fin_timeout	15	AUTO_CONDITIONAL	bbr_configure_direct	1506	1573
+net.ipv4.tcp_max_tw_buckets	5000	AUTO_CONDITIONAL	bbr_configure_direct	1506	1573
+net.ipv4.tcp_fastopen	3	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.ipv4.tcp_keepalive_time	300	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.ipv4.tcp_keepalive_intvl	30	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.ipv4.tcp_keepalive_probes	5	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.ipv4.udp_rmem_min	8192	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.ipv4.udp_wmem_min	8192	CORE_DEFAULT	bbr_configure_direct	1506	1573
+net.ipv4.tcp_syncookies	1	CORE_DEFAULT	bbr_configure_direct	1506	1573
+vm.swappiness	20	AUTO_CONDITIONAL	bbr_configure_direct	1492	1500
+vm.dirty_ratio	20	AUTO_CONDITIONAL	bbr_configure_direct	1493	1500
+vm.dirty_background_ratio	5	AUTO_CONDITIONAL	bbr_configure_direct	1566	1566
+vm.overcommit_memory	1	AUTO_CONDITIONAL	bbr_configure_direct	1567	1567
+vm.min_free_kbytes	32768	AUTO_CONDITIONAL	bbr_configure_direct	1494	1500
+vm.vfs_cache_pressure	50	AUTO_CONDITIONAL	bbr_configure_direct	1569	1569
+kernel.sched_autogroup_enabled	0	ADVANCED	bbr_configure_direct	1572	1572
+kernel.numa_balancing	0	ADVANCED	bbr_configure_direct	1573	1573
+conflicts:
+key	source_file	source_line	current_declared_value	desired_value	priority	conflict_type
+system_mutation=NO

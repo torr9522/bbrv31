@@ -1,0 +1,12 @@
+ Static hostname: debian
+       Icon name: computer-vm
+         Chassis: vm 🖴
+      Machine ID: ae8a8de08f4c4e888623f01e349d504b
+         Boot ID: 95402652fa0b4d51a00e670aabbdc2bd
+  Virtualization: amazon
+Operating System: Debian GNU/Linux 12 (bookworm)
+          Kernel: Linux 6.1.0-50-amd64
+    Architecture: x86-64
+ Hardware Vendor: Amazon EC2
+  Hardware Model: t3.micro
+Firmware Version: 1.0

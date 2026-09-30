@@ -1,0 +1,13 @@
+BEFORE
+default via 66.245.216.1 dev enp1s0 onlink initcwnd 32 initrwnd 32 
+qdisc fq 0: root refcnt 2 limit 10000p flow_limit 100p buckets 1024 orphan_mask 1023 quantum 3028b initial_quantum 15140b low_rate_threshold 550Kbit refill_delay 40ms timer_slack 10us horizon 10s horizon_drop 
+PASS network rollback
+network_rc=0
+resource_rc=0
+RUNTIME_DRIFT vm.min_free_kbytes
+sysctl_rc=1
+AFTER
+default via 66.245.216.1 dev enp1s0 onlink 
+qdisc fq 0: root refcnt 2 limit 10000p flow_limit 100p buckets 1024 orphan_mask 1023 quantum 3028b initial_quantum 15140b low_rate_threshold 550Kbit refill_delay 40ms timer_slack 10us horizon 10s horizon_drop 
+[always] madvise never
+enabled

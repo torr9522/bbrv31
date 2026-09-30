@@ -1,0 +1,2 @@
+default via 172.26.0.1 dev ens5 onlink 
+172.26.0.0/20 dev ens5 proto kernel scope link src 172.26.3.35 

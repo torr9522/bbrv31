@@ -1,0 +1,41 @@
+kernel=6.18.54-x64v3-xanmod1
+interface=ens5
+net.ipv4.tcp_congestion_control = bbr
+net.core.default_qdisc = fq
+qdisc mq 0: root 
+qdisc fq 0: parent :2 limit 10000p flow_limit 100p buckets 1024 orphan_mask 1023 quantum 3028b initial_quantum 15140b low_rate_threshold 550Kbit refill_delay 40ms timer_slack 10us horizon 10s horizon_drop 
+qdisc fq 0: parent :1 limit 10000p flow_limit 100p buckets 1024 orphan_mask 1023 quantum 3028b initial_quantum 15140b low_rate_threshold 550Kbit refill_delay 40ms timer_slack 10us horizon 10s horizon_drop 
+default via 172.26.0.1 dev ens5 onlink 
+[always] madvise never
+NAME           TYPE      SIZE USED PRIO
+/dev/nvme0n1p5 partition 975M   0B   -2
+static
+-- No entries --
+network_plan_version=4A
+qdisc=NOOP
+rps=REVIEW
+mss=SKIP
+route=CANDIDATE
+qdisc.decision=NOOP
+qdisc.reason=MQ_ROOT_PRESERVED_LEAF_REVIEW
+qdisc.interface=ens5
+rps.decision=REVIEW
+rps.reason=RPS_FACTS_INCOMPLETE
+mss.decision=SKIP
+mss.reason=NOT_FORWARDING_HOST
+route.decision=CANDIDATE
+route.reason=SINGLE_DEFAULT_ROUTE
+route.target=32/32
+system_mutation=NO
+thp.decision=CANDIDATE
+thp.target=never
+thp.reason=COMPAT_ORIGINAL
+nofile.decision=COMPAT_CANDIDATE
+nofile.target=524288
+nofile.services=
+nofile.reason=LIMITS_COMPATIBILITY
+swap.decision=RESPECT
+swap.reason=EXISTING_SWAP_NOT_OWNED
+vm.decision=DEFER_TO_SYSCTL_PLAN
+vm.reason=PHASE3_OWNED_VALUES
+system_mutation=NO

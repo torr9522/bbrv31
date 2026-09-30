@@ -1,0 +1,16 @@
+network_plan_version=4A
+qdisc=BLOCKED
+rps=REVIEW
+mss=SKIP
+route=CANDIDATE
+qdisc.decision=BLOCKED
+qdisc.reason=MQ_ROOT_PRESERVED_LEAF_REVIEW
+qdisc.interface=ens5
+rps.decision=REVIEW
+rps.reason=RPS_FACTS_INCOMPLETE
+mss.decision=SKIP
+mss.reason=NOT_FORWARDING_HOST
+route.decision=CANDIDATE
+route.reason=SINGLE_DEFAULT_ROUTE
+route.target=32/32
+system_mutation=NO

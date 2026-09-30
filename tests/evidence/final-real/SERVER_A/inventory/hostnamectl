@@ -1,0 +1,12 @@
+ Static hostname: debian
+       Icon name: computer-vm
+         Chassis: vm 🖴
+      Machine ID: f8e174d08ad94ce8a9ab06b0d0458a72
+         Boot ID: bf0630ef01354ec18bb95a4b5214e96d
+  Virtualization: kvm
+Operating System: Debian GNU/Linux 12 (bookworm)
+          Kernel: Linux 6.1.0-50-amd64
+    Architecture: x86-64
+ Hardware Vendor: QEMU
+  Hardware Model: Standard PC _i440FX + PIIX, 1996_
+Firmware Version: rel-1.14.0-0-g155821a1990b-prebuilt.qemu.org

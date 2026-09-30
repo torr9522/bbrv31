@@ -1,0 +1,2 @@
+default via 66.245.216.1 dev enp1s0 onlink 
+66.245.216.0/23 dev enp1s0 proto kernel scope link src 66.245.216.211 

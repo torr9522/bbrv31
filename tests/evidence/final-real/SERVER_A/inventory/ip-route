@@ -1,0 +1,2 @@
+default via 38.47.105.1 dev ens17 onlink 
+38.47.105.0/24 dev ens17 proto kernel scope link src 38.47.105.150 

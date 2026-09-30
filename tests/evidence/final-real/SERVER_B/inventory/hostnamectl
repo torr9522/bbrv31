@@ -1,0 +1,11 @@
+ Static hostname: debian
+       Icon name: computer-vm
+         Chassis: vm 🖴
+      Machine ID: a23488da6b2c4df388bad6866e672030
+         Boot ID: 37ec0e5f3cc943c6ab08f5569962262d
+  Virtualization: microsoft
+Operating System: Debian GNU/Linux 12 (bookworm)
+          Kernel: Linux 6.1.0-50-amd64
+    Architecture: x86-64
+ Hardware Vendor: Vultr
+  Hardware Model: VC2

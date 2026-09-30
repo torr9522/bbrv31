@@ -1,0 +1,15 @@
+TARGET=1.1.1.1
+
+--- 1.1.1.1 ping statistics ---
+10 packets transmitted, 10 received, 0% packet loss, time 9016ms
+rtt min/avg/max/mdev = 1.656/1.752/1.967/0.098 ms
+TARGET=8.8.8.8
+
+--- 8.8.8.8 ping statistics ---
+10 packets transmitted, 10 received, 0% packet loss, time 9012ms
+rtt min/avg/max/mdev = 1.271/1.282/1.295/0.006 ms
+DNS
+20.27.177.113   STREAM github.com
+20.27.177.113   DGRAM  
+HTTPS
+http_code=200 time_connect=0.014897 time_total=0.060735 remote_ip=104.16.124.96

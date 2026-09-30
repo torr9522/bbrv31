@@ -7,3 +7,6 @@ multi-2g-europe\t2\t2048\tEurope\tBIOS\tmq\texisting-partition\tnft-only\tqdisc-
 standard-8g-europe\t4\t8192\tEurope\tUEFI\tmq\tmultiple\tiptables-nft\tkernel-update,rps-rfs,reboot-resume,full-rollback
 secureboot-block\t2\t2048\tAsia\tUEFI-SecureBoot\tfq\texisting\tnft-only\tkernel-block,plan-only
 failure-injection\t2\t2048\tUS-East\tBIOS\tpfifo_fast\tnone\tiptables-nft\tcommand-failure,verify-mismatch,rollback-failure,recovery
+real-A-38.47.105.150\t1\t960\tprovider-US\tBIOS\tfq_codel->fq\texisting-partition\tip tables-nft\tAUTO,one-click,xanmod,one-shot,reboot-resume,sysctl31,qdisc,route-iw,thp,nofile,persistence,network
+real-B-66.245.216.211\t1\t954\tprovider-US\tUEFI\tfq_codel->fq\texisting-partition\tip tables-nft\tAUTO,COMPAT_ORIGINAL,one-click,xanmod,one-shot,reboot-resume,sysctl31,qdisc,route-iw,thp,nofile,persistence,rollback
+real-C-13.115.29.63\t2\t932\tprovider-JP\tBIOS\tmq+fq-leaves\texisting-partition\tnft-unknown\tAUTO,one-click,xanmod,one-shot,reboot-resume,sysctl31,mq-preserve,route-iw,thp,nofile,persistence,fallback,uninstall

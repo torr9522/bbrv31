@@ -1,0 +1,49 @@
+6.18.54-x64v3-xanmod1
+net.ipv4.tcp_congestion_control = bbr
+net.core.default_qdisc = fq
+always madvise [never]
+NAME           TYPE      SIZE USED PRIO
+/dev/nvme0n1p5 partition 975M   0B   -2
+static
+qdisc.tc=PRESENT
+qdisc.json=YES
+qdisc.interface=ens5
+qdisc.root=mq
+qdisc.root_handle=UNKNOWN
+qdisc.parent=ROOT
+qdisc.leaf_qdiscs=mq
+qdisc.mq_root=YES
+qdisc.fq_present=NO
+qdisc.cake_present=NO
+qdisc.htb_present=NO
+qdisc.tbf_present=NO
+qdisc.filters=NO
+qdisc.classes=NO
+network_plan_version=4A
+qdisc=BLOCKED
+rps=REVIEW
+mss=SKIP
+route=NOOP
+qdisc.decision=BLOCKED
+qdisc.reason=MQ_ROOT_PRESERVED_LEAF_REVIEW
+qdisc.interface=ens5
+rps.decision=REVIEW
+rps.reason=RPS_FACTS_INCOMPLETE
+mss.decision=SKIP
+mss.reason=NOT_FORWARDING_HOST
+route.decision=NOOP
+route.reason=ALREADY_32_32
+route.target=32/32
+system_mutation=NO
+thp.decision=CANDIDATE
+thp.target=never
+thp.reason=COMPAT_ORIGINAL
+nofile.decision=COMPAT_CANDIDATE
+nofile.target=524288
+nofile.services=
+nofile.reason=LIMITS_COMPATIBILITY
+swap.decision=RESPECT
+swap.reason=EXISTING_SWAP_NOT_OWNED
+vm.decision=DEFER_TO_SYSCTL_PLAN
+vm.reason=PHASE3_OWNED_VALUES
+system_mutation=NO
