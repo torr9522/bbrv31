@@ -8,6 +8,7 @@ network_plan() {
     if [[ $cake == YES || $htb == YES || $tbf == YES || $filters == YES || $classes == YES ]]; then qdecision=BLOCKED; qreason=EXISTING_QDISC_OWNER_OR_COMPLEX_TREE
     elif [[ $mq == YES ]]; then [[ $fq == YES ]] && qdecision=NOOP || qdecision=BLOCKED; qreason=MQ_ROOT_PRESERVED_LEAF_REVIEW
     elif [[ $qroot == fq ]]; then qdecision=NOOP; qreason=ALREADY_FQ
+    elif [[ $qroot == fq_codel ]]; then qdecision=CANDIDATE; qreason=FQ_CODEL_TO_FQ_SIMPLE_ROOT
     elif [[ $qroot == pfifo_fast || $qroot == pfifo ]]; then qdecision=CANDIDATE; qreason=SIMPLE_SINGLE_QUEUE
     else qdecision=BLOCKED; qreason=UNKNOWN_QDISC_TOPOLOGY; fi
     if (( cpu == 1 )); then rpsdecision=SKIP; rpsreason=SINGLE_CPU
