@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT=$(cd "$(dirname "$0")/../.." && pwd); FIX=$(mktemp -d); STATE=$(mktemp -d); trap 'rm -rf "$FIX" "$STATE"' EXIT
+printf '%s\n' 'cpu.count=1' 'qdisc.root=pfifo_fast' 'qdisc.mq_root=NO' 'qdisc.fq_present=NO' 'qdisc.cake_present=NO' 'qdisc.htb_present=NO' 'qdisc.tbf_present=NO' 'qdisc.filters=NO' 'qdisc.classes=NO' 'network.rx_queue_count=1' 'network.rss=UNAVAILABLE' 'capability.ip_forward=0' 'capability.iptables_backend=iptables-nft' 'route.current=default via 192.0.2.1 dev eth0 metric 100' >"$FIX/facts.env"
+out=$(BBRV3_NETWORK_STATE_ROOT="$STATE" "$ROOT/bbrv3-universal.sh" plan-network --fixture "$FIX"); grep -qx 'qdisc.decision=CANDIDATE' <<<"$out"; grep -qx 'rps.decision=SKIP' <<<"$out"; grep -qx 'mss.decision=SKIP' <<<"$out"; grep -qx 'route.decision=CANDIDATE' <<<"$out"
+printf '%s\n' 'cpu.count=4' 'qdisc.root=mq' 'qdisc.mq_root=YES' 'qdisc.fq_present=NO' 'qdisc.cake_present=NO' 'qdisc.htb_present=NO' 'qdisc.tbf_present=NO' 'qdisc.filters=NO' 'qdisc.classes=NO' 'network.rx_queue_count=4' 'network.rss=PRESENT' 'capability.ip_forward=1' 'capability.iptables_backend=nft-only' 'route.current=default via 192.0.2.1 dev eth0 metric 100' >"$FIX/facts.env"
+out=$(BBRV3_NETWORK_STATE_ROOT="$STATE" "$ROOT/bbrv3-universal.sh" plan-network --fixture "$FIX"); grep -qx 'qdisc.decision=BLOCKED' <<<"$out"; grep -qx 'rps.decision=SKIP' <<<"$out"; grep -qx 'mss.decision=REVIEW' <<<"$out"; printf 'PASS network policy/mock fixtures\n'

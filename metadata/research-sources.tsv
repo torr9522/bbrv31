@@ -1,0 +1,13 @@
+topic\tsource\tversion/date\trelevant_behavior\tused_for
+kernel-network-scaling\thttps://www.kernel.org/doc/html/latest/networking/scaling.html\tcurrent\tRSS/RPS/RFS relationship and queue scaling\tRPS policy and ownership
+tc-qdisc\thttps://man7.org/linux/man-pages/man8/tc.8.html\tcurrent\tqdisc add/change/replace/delete semantics\tqdisc apply and rollback guards
+ip-route\thttps://man7.org/linux/man-pages/man8/ip-route.8.html\tcurrent\troute replace attributes including initcwnd/initrwnd\troute attribute preservation
+iptables\thttps://www.netfilter.org/projects/iptables/index.html\tcurrent\tmangle FORWARD TCPMSS rule model\tMSS ownership
+nftables\thttps://wiki.nftables.org/wiki-nftables/index.php/Matching_packet_headers\tcurrent\tnft rule matching model\tbackend detection and review
+thp\thttps://docs.kernel.org/admin-guide/mm/transhuge.html\tcurrent\ttransparent hugepage enabled interface and never mode\tTHP baseline/apply/rollback
+systemd-limits\thttps://www.freedesktop.org/software/systemd/man/latest/systemd-system.conf.html\tcurrent\tDefaultLimitNOFILE and service manager defaults\tnofile service-aware layer
+systemd-service\thttps://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html\tcurrent\tdrop-in ownership and daemon reload\tnofile persistence ownership
+swap\thttps://man7.org/linux/man-pages/man8/swapon.8.html\tcurrent\tswapfile/device activation and priority\tswap ownership and rollback
+grub\thttps://www.gnu.org/software/grub/manual/grub/grub.html\tcurrent\tboot entry and one-shot boot concepts\tkernel lifecycle safety
+xanmod\thttps://xanmod.org/\tcurrent\tXanMod release and CPU target context\tkernel catalog metadata
+systemd-sysctl\thttps://www.freedesktop.org/software/systemd/man/latest/systemd-sysctl.service.html\tcurrent\tsysctl boot ordering\tpersistence ordering
