@@ -1,0 +1,8 @@
+mode\tfeature\treason\tevidence\tcompat_behavior\tadvanced_override
+AUTO\tRPS-1CPU\tRPS has no queue parallelism on one CPU\tcpu.count=1\tCOMPAT_ORIGINAL applies original CPU>1 guard\tYES
+AUTO\tMSS-nonforwarding\tHost is not forwarding\tnet.ipv4.ip_forward=0\tCOMPAT_ORIGINAL applies FORWARD TCPMSS rule\tYES
+AUTO\tQdisc-complex\tUnknown owner/classes/filters\ttc topology facts\tCOMPAT_ORIGINAL preserves original FQ target with explicit review\tYES
+AUTO\tRoute-multipath\tCannot preserve one route safely\tip route default count/multipath\tCOMPAT_ORIGINAL explicit route operation\tYES
+AUTO\tTHP-policy\tRuntime policy requires explicit compatibility choice\tTHP enabled state\tCOMPAT_ORIGINAL sets never\tYES
+AUTO\tSwap-existing\tExisting swap is third-party\tswapon --show\tCOMPAT_ORIGINAL respects existing and only owns created swap\tYES
+AUTO\tKernel-below-v3\tFormal kernel target requires x64-v3\tlocal CPU flags\tCOMPAT_ORIGINAL requires alternate verified baseline\tYES
