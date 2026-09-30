@@ -1,0 +1,2 @@
+cpu_level\tpackage\tversion\tsha256\tsource\tbbr_version_expected\tarch\tstatus
+x86-64-v3\tlinux-image-6.18.54-x64v3-xanmod1\t6.18.54-x64v3-xanmod1-0~20260925.g8bab3e0\t0d685918e68cb7e764861ebaf276aec94350dbb18d15fc511e4776533a81a090\t/root/bbr-oneclick/vendor/xanmod\t3\tamd64\tFROZEN_METADATA
