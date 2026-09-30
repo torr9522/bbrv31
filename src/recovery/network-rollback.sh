@@ -17,6 +17,6 @@ network_rollback_transaction() {
     if [[ $(awk -F= '$1=="rps.decision"{print $2}' "$d/desired.env") == CANDIDATE && -s $d/rps.cpus ]]; then
         while IFS=$'\t' read -r q cpus flow; do [[ -d $q ]] || continue; printf '%s\n' "$cpus" >"$q/rps_cpus"; printf '%s\n' "$flow" >"$q/rps_flow_cnt"; done <"$d/rps.cpus"
     fi
-    if [[ -f $d/mss.marker ]]; then network_iptables_mutation -t mangle -D FORWARD -p tcp --tcp-flags SYN,RST SYN -m comment --comment "$(<"$d/mss.marker")" -j TCPMSS --clamp-mss-to-pmtu || true; fi
+    if [[ -f $d/mss.marker ]]; then local marker; marker=$(<"$d/mss.marker"); if [[ $marker == nft:* ]]; then network_nft_mutation delete table inet bbrv3_universal || true; else marker=${marker#iptables:}; network_iptables_mutation -t mangle -D FORWARD -p tcp --tcp-flags SYN,RST SYN -m comment --comment "$marker" -j TCPMSS --clamp-mss-to-pmtu || true; fi; fi
     printf ROLLED_BACK >"$d/state"; printf 'PASS network rollback\n'
 }

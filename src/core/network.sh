@@ -6,6 +6,7 @@ BBRV3_NETWORK_LOCK=${BBRV3_NETWORK_LOCK:-$BBRV3_NETWORK_STATE_ROOT/lock}
 BBRV3_NETWORK_TC_BIN=${BBRV3_NETWORK_TC_BIN:-tc}
 BBRV3_NETWORK_IP_BIN=${BBRV3_NETWORK_IP_BIN:-ip}
 BBRV3_NETWORK_IPTABLES_BIN=${BBRV3_NETWORK_IPTABLES_BIN:-iptables}
+BBRV3_NETWORK_NFT_BIN=${BBRV3_NETWORK_NFT_BIN:-nft}
 BBRV3_NETWORK_SYSFS_ROOT=${BBRV3_NETWORK_SYSFS_ROOT:-/sys}
 BBRV3_NETWORK_PROC_ROOT=${BBRV3_NETWORK_PROC_ROOT:-/proc}
 
@@ -23,3 +24,4 @@ network_default_if() { local r; r=$(network_route_text); awk '{for(i=1;i<NF;i++)
 network_tc_mutation() { printf 'tc %q\n' "$*" >>"${NETWORK_AUDIT_FILE:-/dev/null}"; "$BBRV3_NETWORK_TC_BIN" "$@"; }
 network_ip_mutation() { printf 'ip %q\n' "$*" >>"${NETWORK_AUDIT_FILE:-/dev/null}"; "$BBRV3_NETWORK_IP_BIN" "$@"; }
 network_iptables_mutation() { printf 'iptables %q\n' "$*" >>"${NETWORK_AUDIT_FILE:-/dev/null}"; "$BBRV3_NETWORK_IPTABLES_BIN" "$@"; }
+network_nft_mutation() { printf 'nft %q\n' "$*" >>"${NETWORK_AUDIT_FILE:-/dev/null}"; "$BBRV3_NETWORK_NFT_BIN" "$@"; }

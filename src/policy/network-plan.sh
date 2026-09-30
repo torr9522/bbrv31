@@ -15,7 +15,8 @@ network_plan() {
     elif (( queues == 1 )) && [[ $rss != PRESENT ]]; then rpsdecision=CANDIDATE; rpsreason=SINGLE_RX_QUEUE_WITHOUT_RSS
     elif (( queues > 1 )) && [[ $rss == PRESENT ]]; then rpsdecision=SKIP; rpsreason=RSS_OR_MULTIPLE_RX_QUEUES_PRESENT
     else rpsdecision=REVIEW; rpsreason=RPS_FACTS_INCOMPLETE; fi
-    if (( forward == 1 )) && [[ $backend == nft-only || $backend == NONE ]]; then mdecision=REVIEW; mreason=BACKEND_REVIEW
+    if (( forward == 1 )) && [[ $backend == nft-only ]]; then mdecision=CANDIDATE; mreason=NFT_TCPMSS_CLAMP
+    elif (( forward == 1 )) && [[ $backend == NONE ]]; then mdecision=REVIEW; mreason=BACKEND_REVIEW
     elif (( forward == 1 )) && [[ $backend != NONE ]]; then mdecision=CANDIDATE; mreason=FORWARDING_ENABLED
     else mdecision=SKIP; mreason=NOT_FORWARDING_HOST; fi
     if (( route_count == 1 )); then
@@ -28,6 +29,6 @@ network_plan() {
     ifname=$(awk '{for(i=1;i<NF;i++) if($i=="dev"){print $(i+1); exit}}' <<<"$route")
     printf 'qdisc.decision=%s\nqdisc.reason=%s\nqdisc.interface=%s\n' "$qdecision" "$qreason" "${ifname:-UNKNOWN}"
     printf 'rps.decision=%s\nrps.reason=%s\n' "$rpsdecision" "$rpsreason"
-    printf 'mss.decision=%s\nmss.reason=%s\n' "$mdecision" "$mreason"
+    printf 'mss.decision=%s\nmss.reason=%s\nmss.backend=%s\n' "$mdecision" "$mreason" "$backend"
     printf 'route.decision=%s\nroute.reason=%s\nroute.target=32/32\n' "$rdecision" "$rreason"
 }

@@ -7,6 +7,7 @@ detect_capabilities() {
     [[ -r /proc/sys/net/ipv4/ip_forward ]] && forward=$(cat /proc/sys/net/ipv4/ip_forward)
     [[ -r /proc/sys/net/ipv6/conf/all/forwarding ]] && ip6forward=$(cat /proc/sys/net/ipv6/conf/all/forwarding)
     kv capability.iptables "$iptables"
+    if [[ $iptables == NO && $nft == YES ]]; then backend=nft-only; fi
     kv capability.iptables_backend "${backend:-UNKNOWN}"
     kv capability.nft "$nft"
     kv capability.ip_forward "$forward"
