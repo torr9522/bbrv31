@@ -2,11 +2,11 @@
 
 BBRv3 Universal 是面向 Debian 12 AMD64 VPS 的 BBRv3/XanMod 网络调优工具。它保留原版 BBRv3 的 sysctl、buffer、FQ、RPS/RFS、TCPMSS、Route IW、THP、nofile 和 swap 能力，并加入适用性检测、资源 ownership、transaction、持久化、漂移保护、回滚和显式恢复。
 
-> **Release Candidate**：当前公开说明位于 `master`。冻结的 `v0.1.0-rc1` 仍是独立的 RC1 release，安装 payload 固定为 RC1。首次在重要服务器使用前，请确保有 VPS 控制台或 fallback/reinstall 能力。
+> **当前正式版本：`v0.1.1`**。这是 Debian 12 AMD64 的首个正式 0.1.x release。首次在重要服务器使用前，请确保有 VPS 控制台或 fallback/reinstall 能力。
 
 ## Quick Start
 
-正式支持范围是 **Debian 12、AMD64/x86_64**，需要 root。推荐使用 master 上的 bootstrap；它会下载并校验固定的 `v0.1.0-rc1` payload，然后调用正式入口：
+正式支持范围是 **Debian 12、AMD64/x86_64**，需要 root。推荐使用 master 上长期固定的 bootstrap URL；它会下载并校验固定的 `v0.1.1` Release payload，然后调用正式入口：
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/torr9522/bbrv31/master/bootstrap.sh)
@@ -18,7 +18,7 @@ bootstrap 会检查 Debian 12 和 x86_64，下载 release archive 和 checksum�
 
 ## 支持范围
 
-| 项目 | 当前 RC 范围 |
+| 项目 | 当前正式支持范围 |
 | --- | --- |
 | OS | Debian 12 |
 | Architecture | AMD64 / x86_64 |
@@ -109,23 +109,25 @@ AUTO 会根据 CPU、网卡 RX queues/RSS、内存、swap、默认 route、forwa
 /opt/bbrv3-universal/bbrv3-universal.sh recover
 ```
 
-## RC1 注意事项
+## 正式版本注意事项
 
-`v0.1.0-rc1` 的功能、kernel、persistence、recovery 和 rollback 已在 Debian 12 AMD64 测试环境完成真实验收。TcpQuality/NodeQuality 的部分第三方 endpoint 受外部限制，因此没有发布公网吞吐提升百分比，也没有把 benchmark 当成 runtime 依赖。
+`v0.1.1` 保留了 RC1 已验收的功能、kernel、persistence、recovery 和 rollback。TcpQuality/NodeQuality 的部分第三方 endpoint 受外部限制，因此没有发布公网吞吐提升百分比，也没有把 benchmark 当成 runtime 依赖。
 
-仍待扩展的 coverage 包括 native 512 MiB host、更多 nft-only provider 以及更多 RSS/IRQ layouts。这些不是当前 RC1 已知功能 blocker。
+仍待扩展的 coverage 包括 native 512 MiB host、更多 nft-only provider 以及更多 RSS/IRQ layouts。这些不是当前正式版本的功能 blocker。0.x 版本仍建议重要服务器保持控制台或重装能力。
 
-当前公开仓库的 RC1 release：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.0-rc1>
+当前正式 Release：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.1>
+
+历史 RC1 Release（冻结，不再作为推荐安装版本）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.0-rc1>
 
 ## 高级源码安装
 
-严格使用冻结 RC1 payload：
+源码方式安装（高级用户）：
 
 ```bash
-tmp=$(mktemp -d) && git clone --depth 1 --branch v0.1.0-rc1 https://github.com/torr9522/bbrv31.git "$tmp/bbrv31" && sudo bash "$tmp/bbrv31/bbrv3-universal.sh" install
+tmp=$(mktemp -d) && git clone --depth 1 --branch v0.1.1 https://github.com/torr9522/bbrv31.git "$tmp/bbrv31" && sudo bash "$tmp/bbrv31/bbrv3-universal.sh" install
 ```
 
-bootstrap 和 README 位于 RC1 之后的 `master`；RC1 tag 和 release asset 保持不变。bootstrap 默认下载的实际 runtime payload 仍固定为 `v0.1.0-rc1`。
+固定安装入口位于 `master`，但默认 payload 始终是显式固定的正式 Release。以后版本升级只需更新 bootstrap 的默认版本；用户使用的 URL 不变。`v0.1.0-rc1` tag 和 release asset 永久保留且不被修改。
 
 ## 来源与许可
 
