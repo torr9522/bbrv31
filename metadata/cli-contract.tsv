@@ -1,0 +1,13 @@
+command	alias_of	public	root_required	mutation_scope	reboot_capable	handler	status
+install	one-click --apply	YES	YES	kernel decision plus owned sysctl/network/system/persistence	YES	orchestration_install	IMPLEMENTED
+optimize	apply	YES	YES	resolved current policy	NO	orchestration_optimize	IMPLEMENTED
+apply	apply-sysctl/apply-network/apply-resources	YES	YES	resolved owned resources	NO	orchestration_apply	IMPLEMENTED
+rollback	rollback-all	YES	YES	owned resources, drift blocking	NO	orchestration_rollback	IMPLEMENTED
+recover	recover-all	YES	YES	explicit owned recovery	NO	orchestration_recover	IMPLEMENTED
+reboot	reboot-resume	YES	YES	managed WAIT_REBOOT transaction only	YES	orchestration_reboot	IMPLEMENTED
+uninstall	rollback plus persistence cleanup	YES	YES	owned resources and project unit	NO	orchestration_uninstall	IMPLEMENTED
+status	status	YES	NO	read-only runtime state	NO	status_ui	IMPLEMENTED
+advanced	advanced	YES	NO	read-only capability menu	NO	advanced_ui	IMPLEMENTED
+one-click	one-click	YES	YES	plan or full orchestration with --apply	YES	one_click	IMPLEMENTED
+detect	detect	YES	NO	read-only detection	NO	detect/all.sh	IMPLEMENTED
+dry-run	dry-run	YES	NO	read-only policy	NO	dry-run.sh	IMPLEMENTED
