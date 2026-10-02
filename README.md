@@ -2,19 +2,25 @@
 
 BBRv3 Universal 是面向 Debian 12 AMD64 VPS 的 BBRv3/XanMod 网络调优工具。它保留原版 BBRv3 的 sysctl、buffer、FQ、RPS/RFS、TCPMSS、Route IW、THP、nofile 和 swap 能力，并加入适用性检测、资源 ownership、transaction、持久化、漂移保护、回滚和显式恢复。
 
-> **当前正式版本：`v0.1.3`**。这是针对公开安装路径 kernel lifecycle 和 Release asset 命名修复后的 Debian 12 AMD64 正式版本。首次在重要服务器使用前，请确保有 VPS 控制台或 fallback/reinstall 能力。
+> **当前正式版本：`v0.1.4`**。这是加入状态优先交互菜单后的 Debian 12 AMD64 正式版本。首次在重要服务器使用前，请确保有 VPS 控制台或 fallback/reinstall 能力。
 
 ## Quick Start
 
-正式支持范围是 **Debian 12、AMD64/x86_64**，需要 root。推荐使用 master 上长期固定的 bootstrap URL；它会下载并校验固定的 `v0.1.3` Release payload 和 formal kernel package，然后调用正式入口：
+正式支持范围是 **Debian 12、AMD64/x86_64**，需要 root。普通用户推荐使用状态优先的固定菜单入口；它会先检测服务器并显示菜单，不会启动就自动安装：
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/torr9522/bbrv31/master/bbrv3.sh)
+```
+
+菜单选择安装后才会部署到 `/opt/bbrv3-universal`。内部 bootstrap 安装入口仍会下载并校验固定的 `v0.1.4` Release payload 和 formal kernel package：
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/torr9522/bbrv31/master/bootstrap.sh)
 ```
 
-bootstrap 会检查 Debian 12 和 x86_64，下载 release archive 和 checksum，验证 SHA256，使用 `zstd` 解压到 `/opt/bbrv3-universal`，最后执行 `bbrv3-universal.sh install`。它不会关闭 TLS 校验，也不会自动执行 `apt full-upgrade`。已有 `/opt/bbrv3-universal` 时会拒绝覆盖，避免破坏未知安装。
+bootstrap 会检查 Debian 12 和 x86_64，下载 release archive、checksum 和 formal kernel package，验证 SHA256，使用 `zstd` 解压到 `/opt/bbrv3-universal`，最后执行 `bbrv3-universal.sh install`。它不会关闭 TLS 校验，也不会自动执行 `apt full-upgrade`。已有 `/opt/bbrv3-universal` 时会拒绝覆盖，避免破坏未知安装。
 
-安装需要 root，并可能修改 sysctl、qdisc、route、RPS/RFS、TCPMSS、THP、nofile、swap 和 systemd persistence。当前仓库没有随 payload 提供 XanMod `.deb`；`install` 会执行平台/kernel preflight 和 kernel plan，再应用已解析的 tuning policy。实际 kernel package lifecycle 使用下面的 `kernel-*` 命令，并需要管理员提供本地 package。安装内核或执行 one-shot boot 时 SSH 可能暂时断开；resume/persistence 设计用于重启后继续。
+安装需要 root，并可能修改 sysctl、qdisc、route、RPS/RFS、TCPMSS、THP、nofile、swap 和 systemd persistence。正式 Release payload 会通过 bootstrap 放入已校验的 XanMod `.deb`。安装内核或执行 one-shot boot 时 SSH 可能暂时断开；resume/persistence 设计用于重启后继续。
 
 ## 支持范围
 
@@ -92,7 +98,9 @@ AUTO 会根据 CPU、网卡 RX queues/RSS、内存、swap、默认 route、forwa
 
 `COMPAT_ORIGINAL` 用于尽量保持原版行为，包括 31 项 sysctl、Asia/Overseas buffer 分支、FQ、RPS/RFS、TCPMSS、IW 32/32、THP、nofile 524288 和 swap 行为。`advanced` 可查看 profiles、FQ/qdisc、CAKE、RPS/RFS、MSS、Route IW、THP、nofile、swap 和 kernel capability；CAKE 是高级能力，不代表默认启用。
 
-当前代码提供命名 CLI；没有额外的数字交互菜单。请以 `--help` 和命令输出为准，不要执行网上其他版本的菜单命令。
+固定的 `bbrv3.sh` 会进入数字交互菜单。菜单启动和每次返回时都会重新读取系统、虚拟化、运行 kernel、BBR、qdisc、fallback kernel、项目版本和 persistence 状态。原有命名 CLI 仍保留，适合脚本和高级用户。
+
+菜单包含安装/AUTO、详细状态、kernel 状态、回滚、显式恢复、高级设置、更新和卸载项目等真实后端操作。菜单打开后输入 `0` 只退出，不会改变系统。
 
 ## 安全与故障处理
 
@@ -111,13 +119,13 @@ AUTO 会根据 CPU、网卡 RX queues/RSS、内存、swap、默认 route、forwa
 
 ## 正式版本注意事项
 
-`v0.1.3` 保留了 RC1/v0.1.1/v0.1.2 已验收的功能、kernel、persistence、recovery 和 rollback，并修复了公开 install 路径的 kernel lifecycle 与 GitHub Release asset 命名问题。TcpQuality/NodeQuality 的部分第三方 endpoint 受外部限制，因此没有发布公网吞吐提升百分比，也没有把 benchmark 当成 runtime 依赖。
+`v0.1.4` 保留了 RC1/v0.1.1/v0.1.2/v0.1.3 已验收的功能、kernel、persistence、recovery 和 rollback，并加入状态优先交互菜单。TcpQuality/NodeQuality 的部分第三方 endpoint 受外部限制，因此没有发布公网吞吐提升百分比，也没有把 benchmark 当成 runtime 依赖。
 
 仍待扩展的 coverage 包括 native 512 MiB host、更多 nft-only provider 以及更多 RSS/IRQ layouts。这些不是当前正式版本的功能 blocker。0.x 版本仍建议重要服务器保持控制台或重装能力。
 
-当前正式 Release：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.3>
+当前正式 Release：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.4>
 
-上一正式 Release（保留不变）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.2>
+上一正式 Release（保留不变）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.3>
 
 历史 RC1 Release（冻结，不再作为推荐安装版本）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.0-rc1>
 
@@ -126,7 +134,7 @@ AUTO 会根据 CPU、网卡 RX queues/RSS、内存、swap、默认 route、forwa
 源码方式安装（高级用户）：
 
 ```bash
-tmp=$(mktemp -d) && git clone --depth 1 --branch v0.1.2 https://github.com/torr9522/bbrv31.git "$tmp/bbrv31" && sudo bash "$tmp/bbrv31/bbrv3-universal.sh" install
+tmp=$(mktemp -d) && git clone --depth 1 --branch v0.1.4 https://github.com/torr9522/bbrv31.git "$tmp/bbrv31" && sudo bash "$tmp/bbrv31/bbrv3.sh"
 ```
 
 固定安装入口位于 `master`，但默认 payload 始终是显式固定的正式 Release。以后版本升级只需更新 bootstrap 的默认版本；用户使用的 URL 不变。`v0.1.0-rc1` tag 和 release asset 永久保留且不被修改。
