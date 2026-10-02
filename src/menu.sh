@@ -110,7 +110,15 @@ main() {
         printf '请输入数字：'
         read -r choice || exit 0
         case $choice in
-            1) run_action install || [[ $? -eq 75 ]] && exit 75;;
+            1)
+                if run_action install; then
+                    :
+                else
+                    rc=$?
+                    [[ $rc -eq 75 ]] && exit 75
+                    return "$rc"
+                fi
+                ;;
             2) run_action install;;
             3) run_action optimize;;
             4) run_action status;;
