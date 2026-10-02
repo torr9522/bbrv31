@@ -39,7 +39,7 @@ if [[ ${1:-} == --update ]]; then
 fi
 
 if [[ -x $INSTALL_DIR/bbrv3-universal.sh ]]; then
-    installed_version=$(<"$INSTALL_DIR/VERSION" 2>/dev/null || true)
+    installed_version=$(cat "$INSTALL_DIR/VERSION" 2>/dev/null || true)
     if [[ $installed_version == "${VERSION_TARGET#v}" ]]; then
         exec "$INSTALL_DIR/bbrv3-universal.sh" menu
     fi

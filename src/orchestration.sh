@@ -34,12 +34,17 @@ install_reconcile_wrapper() {
 }
 
 kernel_resume_pending() {
-    local root=${BBRV3_STATE_ROOT:-/var/lib/bbrv3-universal}/lifecycle d stage
+    local root=${BBRV3_STATE_ROOT:-/var/lib/bbrv3-universal}/lifecycle d stage entry
     for d in "$root"/*; do
         [[ -f $d/stage ]] || continue
         stage=$(<"$d/stage")
         [[ $stage == WAIT_REBOOT ]] || continue
         if kernel_formal_running; then
+            entry=$(<"${BBRV3_KERNEL_STATE_ROOT:-${BBRV3_STATE_ROOT:-/var/lib/bbrv3-universal}/kernel}/boot-entry" 2>/dev/null || kernel_find_xanmod_entry || true)
+            [[ -n $entry ]] && kernel_set_persistent_default "$entry" || {
+                printf 'kernel.action=BLOCKED\nkernel.reason=FORMAL_KERNEL_PERSISTENT_BOOT_FAILED\n' >&2
+                return 1
+            }
             lifecycle_transition "$d" POST_KERNEL_VERIFY
             printf 'kernel.action=POST_KERNEL_VERIFY\nkernel.state=FORMAL_BASELINE_RUNNING\n'
             return 0
@@ -78,6 +83,11 @@ orchestration_install() {
         printf 'install=PRECHECK\n'
         local package pending entry
         if kernel_formal_running; then
+            entry=$(kernel_find_xanmod_entry || true)
+            [[ -n $entry ]] && kernel_set_persistent_default "$entry" || {
+                printf 'kernel.action=BLOCKED\nkernel.reason=FORMAL_KERNEL_PERSISTENT_BOOT_FAILED\n' >&2
+                return 1
+            }
             printf 'kernel.decision=NOOP\nkernel.action=NOOP\nkernel.state=FORMAL_BASELINE_ALREADY_RUNNING\n'
         else
             "$ROOT/bbrv3-universal.sh" kernel-plan

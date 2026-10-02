@@ -23,13 +23,19 @@ persistence_reconcile() {
     if [[ -f ${root}/src/core/kernel.sh ]]; then
         . "${root}/src/core/kernel.sh"
         . "${root}/src/core/lifecycle.sh"
+        . "${root}/src/apply/kernel.sh"
         kernel_resume_pending() {
-            local lifecycle_root=${BBRV3_STATE_ROOT:-/var/lib/bbrv3-universal}/lifecycle d stage
+            local lifecycle_root=${BBRV3_STATE_ROOT:-/var/lib/bbrv3-universal}/lifecycle d stage entry
             for d in "$lifecycle_root"/*; do
                 [[ -f $d/stage ]] || continue
                 stage=$(<"$d/stage")
                 [[ $stage == WAIT_REBOOT ]] || continue
                 if kernel_formal_running; then
+                    entry=$(<"${BBRV3_KERNEL_STATE_ROOT:-${BBRV3_STATE_ROOT:-/var/lib/bbrv3-universal}/kernel}/boot-entry" 2>/dev/null || kernel_find_xanmod_entry || true)
+                    [[ -n $entry ]] && kernel_set_persistent_default "$entry" || {
+                        printf 'kernel.action=BLOCKED\nkernel.reason=FORMAL_KERNEL_PERSISTENT_BOOT_FAILED\n' >&2
+                        return 1
+                    }
                     lifecycle_transition "$d" POST_KERNEL_VERIFY
                     printf 'kernel.action=POST_KERNEL_VERIFY\nkernel.state=FORMAL_BASELINE_RUNNING\n'
                     return 0
