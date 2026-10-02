@@ -6,7 +6,7 @@ REPOSITORY=${BBRV3_REPOSITORY:-torr9522/bbrv31}
 INSTALL_DIR=${BBRV3_INSTALL_DIR:-/opt/bbrv3-universal}
 ARCHIVE_NAME="bbrv3-universal-${TARGET_VERSION}-source.tar.zst"
 BASE_URL="https://github.com/${REPOSITORY}/releases/download/${TARGET_VERSION}"
-KERNEL_PACKAGE_NAME="linux-image-6.18.54-x64v3-xanmod1_6.18.54-x64v3-xanmod1-0~20260925.g8bab3e0_amd64.deb"
+KERNEL_PACKAGE_NAME="linux-image-6.18.54-x64v3-xanmod1_6.18.54-x64v3-xanmod1-0.20260925.g8bab3e0_amd64.deb"
 
 die() { printf 'bootstrap: %s\n' "$*" >&2; exit 1; }
 [[ $EUID -eq 0 ]] || die 'root privileges are required (run with sudo or as root)'
