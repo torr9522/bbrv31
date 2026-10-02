@@ -3,6 +3,53 @@ set -euo pipefail
 
 ROOT=${BBRV3_UNIVERSAL_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}
 
+source "$ROOT/src/core/kernel.sh"
+source "$ROOT/src/apply/kernel.sh"
+source "$ROOT/src/core/lifecycle.sh"
+
+kernel_package_path() {
+    if [[ -n ${BBRV3_KERNEL_PACKAGE:-} ]]; then
+        printf '%s\n' "$BBRV3_KERNEL_PACKAGE"
+        return 0
+    fi
+    find "$ROOT/vendor" -type f -name "$(kernel_formal_package)_*.deb" -print -quit 2>/dev/null
+}
+
+kernel_pending_root() { printf '%s\n' "${BBRV3_STATE_ROOT:-/var/lib/bbrv3-universal}/lifecycle"; }
+
+kernel_mark_wait_reboot() {
+    local d
+    d=$(lifecycle_new)
+    lifecycle_transition "$d" PRECHECK
+    lifecycle_transition "$d" KERNEL_INSTALL
+    lifecycle_transition "$d" WAIT_REBOOT
+    printf 'kernel_transaction=%s\n' "$d" >"$d/metadata.env"
+    printf '%s\n' "$d"
+}
+
+install_reconcile_wrapper() {
+    install -d -m 755 /usr/local/sbin
+    printf '#!/bin/sh\nexec %q "$@"\n' "$ROOT/bbrv3-universal.sh" > /usr/local/sbin/bbrv3-universal
+    chmod 755 /usr/local/sbin/bbrv3-universal
+}
+
+kernel_resume_pending() {
+    local root=${BBRV3_STATE_ROOT:-/var/lib/bbrv3-universal}/lifecycle d stage
+    for d in "$root"/*; do
+        [[ -f $d/stage ]] || continue
+        stage=$(<"$d/stage")
+        [[ $stage == WAIT_REBOOT ]] || continue
+        if kernel_formal_running; then
+            lifecycle_transition "$d" POST_KERNEL_VERIFY
+            printf 'kernel.action=POST_KERNEL_VERIFY\nkernel.state=FORMAL_BASELINE_RUNNING\n'
+            return 0
+        fi
+        printf 'kernel.action=WAIT_REBOOT\nkernel.state=FORMAL_BASELINE_NOT_RUNNING\n' >&2
+        return 1
+    done
+    return 2
+}
+
 cli_mock_dispatch() {
     [[ ${BBRV3_CLI_MOCK:-NO} == YES ]] || return 1
     printf 'dispatch=%s\n' "$1"
@@ -16,9 +63,7 @@ orchestration_apply() {
         "$ROOT/bbrv3-universal.sh" apply-network "$@"
         "$ROOT/bbrv3-universal.sh" apply-resources "$@"
         source "$ROOT/src/persistence/reconcile.sh"
-        install -d -m 755 /usr/local/sbin
-        printf '#!/bin/sh\nexec %q "$@"\n' "$ROOT/bbrv3-universal.sh" > /usr/local/sbin/bbrv3-universal
-        chmod 755 /usr/local/sbin/bbrv3-universal
+        install_reconcile_wrapper
         persistence_write_unit
         persistence_enable_metadata
         systemctl daemon-reload 2>/dev/null || true
@@ -31,7 +76,32 @@ orchestration_install() {
     cli_mock_dispatch install || {
         [[ $EUID -eq 0 ]] || { printf 'ROOT_REQUIRED\n' >&2; return 1; }
         printf 'install=PRECHECK\n'
-        "$ROOT/bbrv3-universal.sh" kernel-plan
+        local package pending
+        if kernel_formal_running; then
+            printf 'kernel.decision=NOOP\nkernel.action=NOOP\nkernel.state=FORMAL_BASELINE_ALREADY_RUNNING\n'
+        else
+            "$ROOT/bbrv3-universal.sh" kernel-plan
+            package=$(kernel_package_path)
+            [[ -n $package && -f $package ]] || {
+                printf 'kernel.action=BLOCKED\nkernel.reason=FORMAL_KERNEL_PAYLOAD_MISSING\n' >&2
+                return 1
+            }
+            printf 'kernel.action=INSTALL\nkernel.package=%s\n' "$package"
+            kernel_install_package "$package" || {
+                printf 'kernel.action=FAILED\nkernel.reason=KERNEL_INSTALL_FAILED\n' >&2
+                return 1
+            }
+            pending=$(kernel_mark_wait_reboot)
+            printf 'kernel.action=REBOOT_REQUIRED\nkernel.state=WAIT_REBOOT\ntransaction=%s\n' "$(basename "$pending")"
+            source "$ROOT/src/persistence/reconcile.sh"
+            install_reconcile_wrapper
+            persistence_write_unit
+            persistence_enable_metadata
+            systemctl daemon-reload 2>/dev/null || true
+            systemctl enable bbrv3-universal-reconcile.service >/dev/null 2>&1 || true
+            "${BBRV3_REBOOT_COMMAND:-reboot}"
+            return 75
+        fi
         orchestration_apply "$@"
         printf 'install=COMPLETE\n'
     }

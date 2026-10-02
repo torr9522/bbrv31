@@ -5,3 +5,7 @@ kernel_ensure_root() { [[ ! -L $BBRV3_KERNEL_STATE_ROOT ]] || return 1; install 
 kernel_lock() { kernel_ensure_root; exec 6>"$BBRV3_KERNEL_STATE_ROOT/lock"; flock -n 6; }
 kernel_cpu_level() { local flags; flags=$(awk -F: '/^(flags|Features)/{print $2;exit}' /proc/cpuinfo); if [[ $(uname -m) != x86_64 ]]; then printf arm64; elif grep -qw avx2 <<<"$flags" && grep -qw fma <<<"$flags"; then printf x86-64-v3; elif grep -qw sse4_2 <<<"$flags"; then printf x86-64-v2; else printf x86-64-v1; fi; }
 kernel_boot_mode() { [[ -d /sys/firmware/efi ]] && printf UEFI || printf BIOS; }
+kernel_formal_release() { printf '6.18.54-x64v3-xanmod1\n'; }
+kernel_formal_package() { printf 'linux-image-6.18.54-x64v3-xanmod1\n'; }
+kernel_formal_running() { [[ $(uname -r) == "$(kernel_formal_release)" ]]; }
+kernel_formal_installed() { [[ $(dpkg-query -W -f='${Status}' "$(kernel_formal_package)" 2>/dev/null) == 'install ok installed' ]]; }
