@@ -2,11 +2,11 @@
 
 BBRv3 Universal 是面向 Debian 12 AMD64 VPS 的 BBRv3/XanMod 网络调优工具。它保留原版 BBRv3 的 sysctl、buffer、FQ、RPS/RFS、TCPMSS、Route IW、THP、nofile 和 swap 能力，并加入适用性检测、资源 ownership、transaction、持久化、漂移保护、回滚和显式恢复。
 
-> **当前正式版本：`v0.1.2`**。这是针对公开安装路径 kernel lifecycle 修复后的 Debian 12 AMD64 正式版本。首次在重要服务器使用前，请确保有 VPS 控制台或 fallback/reinstall 能力。
+> **当前正式版本：`v0.1.3`**。这是针对公开安装路径 kernel lifecycle 和 Release asset 命名修复后的 Debian 12 AMD64 正式版本。首次在重要服务器使用前，请确保有 VPS 控制台或 fallback/reinstall 能力。
 
 ## Quick Start
 
-正式支持范围是 **Debian 12、AMD64/x86_64**，需要 root。推荐使用 master 上长期固定的 bootstrap URL；它会下载并校验固定的 `v0.1.2` Release payload 和 formal kernel package，然后调用正式入口：
+正式支持范围是 **Debian 12、AMD64/x86_64**，需要 root。推荐使用 master 上长期固定的 bootstrap URL；它会下载并校验固定的 `v0.1.3` Release payload 和 formal kernel package，然后调用正式入口：
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/torr9522/bbrv31/master/bootstrap.sh)
@@ -111,13 +111,13 @@ AUTO 会根据 CPU、网卡 RX queues/RSS、内存、swap、默认 route、forwa
 
 ## 正式版本注意事项
 
-`v0.1.2` 保留了 RC1/v0.1.1 已验收的功能、kernel、persistence、recovery 和 rollback，并修复了公开 install 路径未 dispatch kernel lifecycle 的问题。TcpQuality/NodeQuality 的部分第三方 endpoint 受外部限制，因此没有发布公网吞吐提升百分比，也没有把 benchmark 当成 runtime 依赖。
+`v0.1.3` 保留了 RC1/v0.1.1/v0.1.2 已验收的功能、kernel、persistence、recovery 和 rollback，并修复了公开 install 路径的 kernel lifecycle 与 GitHub Release asset 命名问题。TcpQuality/NodeQuality 的部分第三方 endpoint 受外部限制，因此没有发布公网吞吐提升百分比，也没有把 benchmark 当成 runtime 依赖。
 
 仍待扩展的 coverage 包括 native 512 MiB host、更多 nft-only provider 以及更多 RSS/IRQ layouts。这些不是当前正式版本的功能 blocker。0.x 版本仍建议重要服务器保持控制台或重装能力。
 
-当前正式 Release：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.2>
+当前正式 Release：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.3>
 
-上一正式 Release（保留不变）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.1>
+上一正式 Release（保留不变）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.2>
 
 历史 RC1 Release（冻结，不再作为推荐安装版本）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.0-rc1>
 
