@@ -76,21 +76,31 @@ orchestration_install() {
     cli_mock_dispatch install || {
         [[ $EUID -eq 0 ]] || { printf 'ROOT_REQUIRED\n' >&2; return 1; }
         printf 'install=PRECHECK\n'
-        local package pending
+        local package pending entry
         if kernel_formal_running; then
             printf 'kernel.decision=NOOP\nkernel.action=NOOP\nkernel.state=FORMAL_BASELINE_ALREADY_RUNNING\n'
         else
             "$ROOT/bbrv3-universal.sh" kernel-plan
-            package=$(kernel_package_path)
-            [[ -n $package && -f $package ]] || {
-                printf 'kernel.action=BLOCKED\nkernel.reason=FORMAL_KERNEL_PAYLOAD_MISSING\n' >&2
-                return 1
-            }
-            printf 'kernel.action=INSTALL\nkernel.package=%s\n' "$package"
-            kernel_install_package "$package" || {
-                printf 'kernel.action=FAILED\nkernel.reason=KERNEL_INSTALL_FAILED\n' >&2
-                return 1
-            }
+            if kernel_formal_installed; then
+                entry=$(kernel_find_xanmod_entry || true)
+                [[ -n $entry ]] || {
+                    printf 'kernel.action=BLOCKED\nkernel.reason=FORMAL_KERNEL_GRUB_ENTRY_MISSING\n' >&2
+                    return 1
+                }
+                kernel_set_one_shot "$entry"
+                printf 'kernel.action=REBOOT_REQUIRED\nkernel.state=FORMAL_BASELINE_INSTALLED\n'
+            else
+                package=$(kernel_package_path)
+                [[ -n $package && -f $package ]] || {
+                    printf 'kernel.action=BLOCKED\nkernel.reason=FORMAL_KERNEL_PAYLOAD_MISSING\n' >&2
+                    return 1
+                }
+                printf 'kernel.action=INSTALL\nkernel.package=%s\n' "$package"
+                kernel_install_package "$package" || {
+                    printf 'kernel.action=FAILED\nkernel.reason=KERNEL_INSTALL_FAILED\n' >&2
+                    return 1
+                }
+            fi
             pending=$(kernel_mark_wait_reboot)
             printf 'kernel.action=REBOOT_REQUIRED\nkernel.state=WAIT_REBOOT\ntransaction=%s\n' "$(basename "$pending")"
             source "$ROOT/src/persistence/reconcile.sh"
