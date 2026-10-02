@@ -2,7 +2,7 @@
 
 BBRv3 Universal 是面向 Debian 12 AMD64 VPS 的 BBRv3/XanMod 网络调优工具。它保留原版 BBRv3 的 sysctl、buffer、FQ、RPS/RFS、TCPMSS、Route IW、THP、nofile 和 swap 能力，并加入适用性检测、资源 ownership、transaction、持久化、漂移保护、回滚和显式恢复。
 
-> **当前正式版本：`v0.1.5`**。这是加入状态优先交互菜单并修正菜单安装返回行为后的 Debian 12 AMD64 正式版本。首次在重要服务器使用前，请确保有 VPS 控制台或 fallback/reinstall 能力。
+> **当前正式版本：`v0.1.6`**。这是加入状态优先交互菜单、修正菜单安装返回行为并兼容已安装旧 payload 后的 Debian 12 AMD64 正式版本。首次在重要服务器使用前，请确保有 VPS 控制台或 fallback/reinstall 能力。
 
 ## Quick Start
 
@@ -12,7 +12,7 @@ BBRv3 Universal 是面向 Debian 12 AMD64 VPS 的 BBRv3/XanMod 网络调优工�
 bash <(curl -fsSL https://raw.githubusercontent.com/torr9522/bbrv31/master/bbrv3.sh)
 ```
 
-菜单选择安装后才会部署到 `/opt/bbrv3-universal`。内部 bootstrap 安装入口仍会下载并校验固定的 `v0.1.5` Release payload 和 formal kernel package：
+菜单选择安装后才会部署到 `/opt/bbrv3-universal`。内部 bootstrap 安装入口仍会下载并校验固定的 `v0.1.6` Release payload 和 formal kernel package：
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/torr9522/bbrv31/master/bootstrap.sh)
@@ -119,13 +119,13 @@ AUTO 会根据 CPU、网卡 RX queues/RSS、内存、swap、默认 route、forwa
 
 ## 正式版本注意事项
 
-`v0.1.5` 保留了 RC1/v0.1.1/v0.1.2/v0.1.3/v0.1.4 已验收的功能、kernel、persistence、recovery 和 rollback，并加入状态优先交互菜单。TcpQuality/NodeQuality 的部分第三方 endpoint 受外部限制，因此没有发布公网吞吐提升百分比，也没有把 benchmark 当成 runtime 依赖。
+`v0.1.6` 保留了 RC1/v0.1.1/v0.1.2/v0.1.3/v0.1.4/v0.1.5 已验收的功能、kernel、persistence、recovery 和 rollback，并修正已安装旧 payload 重新打开公开菜单时的兼容性。菜单的最新版检查使用缓存规避参数，避免 raw GitHub CDN 延迟造成错误版本显示。TcpQuality/NodeQuality 的部分第三方 endpoint 受外部限制，因此没有发布公网吞吐提升百分比，也没有把 benchmark 当成 runtime 依赖。
 
 仍待扩展的 coverage 包括 native 512 MiB host、更多 nft-only provider 以及更多 RSS/IRQ layouts。这些不是当前正式版本的功能 blocker。0.x 版本仍建议重要服务器保持控制台或重装能力。
 
-当前正式 Release：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.5>
+当前正式 Release：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.6>
 
-上一正式 Release（保留不变）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.4>
+上一正式 Release（保留不变）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.5>
 
 历史 RC1 Release（冻结，不再作为推荐安装版本）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.0-rc1>
 
@@ -134,7 +134,7 @@ AUTO 会根据 CPU、网卡 RX queues/RSS、内存、swap、默认 route、forwa
 源码方式安装（高级用户）：
 
 ```bash
-tmp=$(mktemp -d) && git clone --depth 1 --branch v0.1.5 https://github.com/torr9522/bbrv31.git "$tmp/bbrv31" && sudo bash "$tmp/bbrv31/bbrv3.sh"
+tmp=$(mktemp -d) && git clone --depth 1 --branch v0.1.6 https://github.com/torr9522/bbrv31.git "$tmp/bbrv31" && sudo bash "$tmp/bbrv31/bbrv3.sh"
 ```
 
 固定安装入口位于 `master`，但默认 payload 始终是显式固定的正式 Release。以后版本升级只需更新 bootstrap 的默认版本；用户使用的 URL 不变。`v0.1.0-rc1` tag 和 release asset 永久保留且不被修改。

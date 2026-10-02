@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION_TARGET=${BBRV3_VERSION:-v0.1.5}
+VERSION_TARGET=${BBRV3_VERSION:-v0.1.6}
 REPOSITORY=${BBRV3_REPOSITORY:-torr9522/bbrv31}
 INSTALL_DIR=${BBRV3_INSTALL_DIR:-/opt/bbrv3-universal}
 ARCHIVE_NAME="bbrv3-universal-${VERSION_TARGET}-source.tar.zst"
@@ -39,7 +39,13 @@ if [[ ${1:-} == --update ]]; then
 fi
 
 if [[ -x $INSTALL_DIR/bbrv3-universal.sh ]]; then
-    exec "$INSTALL_DIR/bbrv3-universal.sh" menu
+    installed_version=$(<"$INSTALL_DIR/VERSION" 2>/dev/null || true)
+    if [[ $installed_version == "${VERSION_TARGET#v}" ]]; then
+        exec "$INSTALL_DIR/bbrv3-universal.sh" menu
+    fi
+    tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+    payload=$(fetch_payload "$tmp")
+    BBRV3_MENU_PROJECT_ROOT="$INSTALL_DIR" BBRV3_UNIVERSAL_ROOT="$payload" exec "$payload/bbrv3-universal.sh" menu
 fi
 
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT

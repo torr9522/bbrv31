@@ -39,7 +39,7 @@ detect_state() {
     [[ -e /var/lib/bbrv3-universal/persistence/enabled ]] && PERSISTENCE=已启用
     LATEST_VERSION=检查失败
     if command -v curl >/dev/null 2>&1; then
-        latest=$(curl -fsSL --max-time 3 https://raw.githubusercontent.com/torr9522/bbrv31/master/LATEST_VERSION 2>/dev/null || true)
+        latest=$(curl -fsSL --max-time 3 "https://raw.githubusercontent.com/torr9522/bbrv31/master/LATEST_VERSION?cache=$(date +%s)" 2>/dev/null || true)
         if [[ $latest =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             LATEST_VERSION=$latest
         fi
