@@ -23,7 +23,7 @@ detect_state() {
     dpkg-query -W -f='${Status}' "linux-image-$FORMAL_KERNEL" 2>/dev/null | grep -q 'install ok installed' && FORMAL_KERNEL_INSTALLED=YES || true
     FORMAL_KERNEL_RUNNING=NO
     [[ $RUNNING_KERNEL == "$FORMAL_KERNEL" ]] && FORMAL_KERNEL_RUNNING=YES
-    FALLBACK_KERNELS=$(dpkg-query -W -f='${Package}\n' 'linux-image-*' 2>/dev/null | grep -v "$FORMAL_KERNEL" | sed 's/^linux-image-//' | grep -E '^[0-9]' | sort -u || true)
+    FALLBACK_KERNELS=$(dpkg-query -W -f='${Package}\t${Status}\n' 'linux-image-*' 2>/dev/null | awk -F '\t' '$2=="install ok installed" {print $1}' | grep -v "$FORMAL_KERNEL" | sed 's/^linux-image-//' | grep -E '^[0-9]' | sort -u || true)
     FALLBACK_KERNEL=$(printf '%s\n' "$FALLBACK_KERNELS" | head -1)
     FALLBACK_COUNT=$(printf '%s\n' "$FALLBACK_KERNELS" | awk 'NF {n++} END {print n+0}')
     CC_ACTIVE=$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null || printf unknown)
