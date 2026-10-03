@@ -2,7 +2,7 @@
 
 BBRv3 Universal 是面向 Debian 12 AMD64 VPS 的 BBRv3/XanMod 网络调优工具。它保留原版 BBRv3 的 sysctl、buffer、FQ、RPS/RFS、TCPMSS、Route IW、THP、nofile 和 swap 能力，并加入适用性检测、资源 ownership、transaction、持久化、漂移保护、回滚和显式恢复。
 
-> **当前正式版本：`v0.1.10`**。本版在保持 Asia 和 Overseas 原版行为不变的基础上，新增推荐用于通用代理节点的 Global / Mixed 模式。首次在重要服务器使用前，请确保有 VPS 控制台或 fallback/reinstall 能力。
+> **当前正式版本：`v0.2.0`**。本版新增 System Default TCP Buffer 模式；Asia、Overseas 和 Global 行为保持不变，Global 仍是默认选项。首次在重要服务器使用前，请确保有 VPS 控制台或 fallback/reinstall 能力。
 
 ## Quick Start
 
@@ -23,7 +23,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/torr9522/bbrv31/master/bbrv3
 
 “安装内核”和“网络优化”是两个独立阶段。菜单 1 不会静默执行测速、地区选择或网络参数修改；菜单 3 只在 formal BBRv3 kernel 正在运行时执行完整调优。
 
-内部 bootstrap 安装入口下载并校验固定的 `v0.1.10` Release payload 和 formal kernel package：
+内部 bootstrap 安装入口下载并校验固定的 `v0.2.0` Release payload 和 formal kernel package：
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/torr9522/bbrv31/master/bootstrap.sh)
@@ -105,13 +105,22 @@ bootstrap 会检查 Debian 12 和 x86_64，下载 release archive、checksum 和
 
 ## BBRv3 网络优化与高级能力
 
-菜单 3 默认执行真实 Ookla Speedtest，也支持指定 Speedtest Server ID 和手工带宽。网络类型包括 `亚太 / 低延迟连接为主`、`欧美 / 跨洲高延迟连接为主` 和默认推荐的 `全球混合 / 代理节点`。Global 适合同时承载 Telegram、X/Twitter、TikTok、全球网页/App、亚洲与欧美混合目的地的通用代理节点。
+菜单 3 默认执行真实 Ookla Speedtest，也支持指定 Speedtest Server ID 和手工带宽。网络类型共有四种：
+
+1. `Asia`：以亚太、低 RTT 连接为主，使用原版较小 Buffer ceiling 曲线。
+2. `Overseas`：以欧美、跨洲高 RTT 连接为主，使用原版较大 Buffer ceiling 曲线。
+3. `Global`：适合 Telegram、X/Twitter、TikTok、全球网页/App，以及亚洲和欧美混合目的地的通用代理节点。这是默认推荐选项。
+4. `System`：BBRv3 Universal 不主动管理四项 TCP Buffer ceiling，适合希望保留系统/provider 设置，或担心小内存高并发 socket memory 压力的用户。
 
 Global 的正式策略名为 `GLOBAL_MIXED_OVERSEAS_CURVE_V1`。自动测速和指定 Server ID 模式会读取 Download 与 Upload，并以两个有效结果中的较大值作为有效带宽；仅一侧有效时使用该侧，手工模式则直接把输入值作为有效带宽。Global 复用已经验收的 Overseas buffer 曲线，没有新增第三套经验数值表，也不执行自动多洲 RTT 探测。Asia 和 Overseas 仍按 v0.1.9 的 upload 输入与原版数值工作。
 
+System 模式只释放 `net.core.rmem_max`、`net.core.wmem_max`、`net.ipv4.tcp_rmem` 和 `net.ipv4.tcp_wmem` 的项目管理权。首次接管前的真实值会保存为带校验的不可变 baseline；从 Asia、Overseas 或 Global 切换时，项目以事务方式恢复该 baseline，并从项目自有 sysctl 文件中删除这四项。找不到可信 baseline 时会安全阻止切换，不会猜测 Debian 或 Kernel 默认值，也不会修改系统、provider 或用户自己的 sysctl 文件。
+
+System 模式不等于关闭 BBR、FQ 或其它优化。其余 27 项通用 sysctl、RPS/RFS、MSS、Route IW、THP、nofile、Swap、持久化、readback 和 recovery 仍会执行。Linux TCP autotuning 仍然存在；System 只是让这四项上限由系统/provider 管理。这是更保守的选择，不代表绝对不会发生 OOM，也不保证比 Global 更快。
+
 内存低于 2 GiB 时，Global 会在任何网络或系统参数 apply 之前说明动态 socket buffer 的内存风险并要求明确确认；拒绝后返回网络类型选择，不会静默降低 Buffer 或继续应用。测速完全失败时仍会明确提供 1000 Mbps fallback 或手工输入。系统会根据 CPU、网卡 RX queues/RSS、内存、swap、默认 route、forwarding 和已有 qdisc 判断 APPLY、NOOP、SKIP 或 CONFLICT；单 CPU 会跳过 RPS，非 forwarding 主机会跳过 MSS。
 
-正式调优路径包括 31 项 sysctl、Asia/Overseas/Global buffer policy、FQ、RPS/RFS、TCPMSS、IW 32/32、THP、nofile 524288、swap 和持久化 readback。CAKE 与本版要求的 FQ canonical path 冲突，因此只保留审计记录，不提供自动 mutation。原版临时 Reality profiles 含非核心应用调优或与持久 policy 冲突，已记录审计结论但不接入菜单 3。
+正式调优路径包括 Asia/Overseas/Global 的 31 项 sysctl，或 System 的 27 项项目管理加 4 项明确 unmanaged 策略，以及 FQ、RPS/RFS、TCPMSS、IW 32/32、THP、nofile 524288、swap 和持久化 readback。原版 31 项功能审计保持不变；System 是用户明确选择的策略例外。CAKE 与本版要求的 FQ canonical path 冲突，因此只保留审计记录，不提供自动 mutation。原版临时 Reality profiles 含非核心应用调优或与持久 policy 冲突，已记录审计结论但不接入菜单 3。
 
 固定的 `bbrv3.sh` 会进入数字交互菜单。菜单启动和每次返回时都会重新读取系统、虚拟化、运行 kernel、BBR、qdisc、fallback kernel、项目版本和 persistence 状态。原有命名 CLI 仍保留，适合脚本和高级用户。
 
@@ -138,9 +147,11 @@ Global 的正式策略名为 `GLOBAL_MIXED_OVERSEAS_CURVE_V1`。自动测速和�
 
 仍待扩展的 coverage 包括 native 512 MiB host、更多 nft-only provider 以及更多 RSS/IRQ layouts。这些不是当前正式版本的功能 blocker。0.x 版本仍建议重要服务器保持控制台或重装能力。
 
-当前正式 Release：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.10>
+当前正式 Release：<https://github.com/torr9522/bbrv31/releases/tag/v0.2.0>
 
-上一正式 Release（冻结且保留不变）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.9>
+上一正式 Release（冻结且保留不变）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.10>
+
+长期冻结基线：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.9>
 
 更早正式 Release（保留不变）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.8>
 
@@ -153,7 +164,7 @@ Global 的正式策略名为 `GLOBAL_MIXED_OVERSEAS_CURVE_V1`。自动测速和�
 源码方式安装（高级用户）：
 
 ```bash
-tmp=$(mktemp -d) && git clone --depth 1 --branch v0.1.10 https://github.com/torr9522/bbrv31.git "$tmp/bbrv31" && sudo bash "$tmp/bbrv31/bbrv3.sh"
+tmp=$(mktemp -d) && git clone --depth 1 --branch v0.2.0 https://github.com/torr9522/bbrv31.git "$tmp/bbrv31" && sudo bash "$tmp/bbrv31/bbrv3.sh"
 ```
 
 固定安装入口位于 `master`，但默认 payload 始终是显式固定的正式 Release。以后版本升级只需更新 bootstrap 的默认版本；用户使用的 URL 不变。`v0.1.0-rc1` tag 和 release asset 永久保留且不被修改。
