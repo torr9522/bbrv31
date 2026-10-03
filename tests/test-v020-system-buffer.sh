@@ -51,6 +51,13 @@ grep -Eq "$BUFFER_RE" "$OWNED"
 "$CLI" apply-sysctl --profile SYSTEM_DEFAULT --bandwidth 7000 --ram-mb 4096 >/dev/null
 assert_original_buffer; assert_system_owned
 [[ $baseline_hash == "$(sha256sum "$STATE/buffer-baseline/baseline.tsv")" ]]
+sed -i 's/^net.ipv4.tcp_rmem=.*/net.ipv4.tcp_rmem=4096 131072 6000000/' "$VALUES"
+verify=$($CLI verify-sysctl)
+grep -qx 'buffer_ownership=RELEASED' <<<"$verify"
+[[ $(awk -F '\t' '$4=="MATCH"{n++} END{print n+0}' <<<"$verify") == 27 ]]
+[[ $(awk -F '\t' '$4=="UNMANAGED"{n++} END{print n+0}' <<<"$verify") == 4 ]]
+! grep -q MISMATCH <<<"$verify"
+sed -i 's/^net.ipv4.tcp_rmem=.*/net.ipv4.tcp_rmem=4096 131072 6291456/' "$VALUES"
 apply_managed GLOBAL_MIXED 7000 64
 "$CLI" apply-sysctl --profile SYSTEM_DEFAULT --bandwidth 7000 --ram-mb 4096 >/dev/null
 assert_original_buffer; assert_system_owned

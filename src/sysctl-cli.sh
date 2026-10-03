@@ -83,10 +83,22 @@ find_unfinished() {
     done < <(find "$BBRV3_STATE_ROOT/transactions" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' 2>/dev/null | sort -nr | awk '{sub(/^[^ ]+ /,""); print}')
 }
 verify_command() {
-    local dir; dir=$(find_transaction); [[ -n $dir && -f $dir/desired.tsv ]] || { dir=$(mktemp -d); make_plan "$dir"; scan_conflicts "$dir/desired.tsv" "$dir/conflicts.tsv" || true; }
+    local dir plan profile key actual; dir=$(find_transaction); [[ -n $dir && -f $dir/desired.tsv ]] || { dir=$(mktemp -d); make_plan "$dir"; scan_conflicts "$dir/desired.tsv" "$dir/conflicts.tsv" || true; }
+    plan=$dir/desired.tsv
+    profile=$(awk -F= '$1=="profile"{print $2; exit}' "$dir/desired.tsv.meta" 2>/dev/null || true)
+    if [[ $profile == SYSTEM_DEFAULT && -f $dir/desired-persistent.tsv ]]; then plan=$dir/desired-persistent.tsv; fi
     printf 'owned_path=%s\nowned_status=%s\n' "$BBRV3_SYSCTL_PATH" "$(owned_file_status)"
-    verify_plan "$dir/desired.tsv" "$dir/verify.tsv" || true
+    if [[ $profile == SYSTEM_DEFAULT ]]; then
+        owned_manages_buffer && printf 'buffer_ownership=INVALID_MANAGED\n' || printf 'buffer_ownership=RELEASED\n'
+    fi
+    verify_plan "$plan" "$dir/verify.tsv" || true
     cat "$dir/verify.tsv"
+    if [[ $profile == SYSTEM_DEFAULT ]]; then
+        while IFS= read -r key; do
+            actual=$(sysctl_read "$key" || true)
+            printf '%s\tPROJECT_UNMANAGED\t%s\tUNMANAGED\n' "$key" "${actual:-UNAVAILABLE}"
+        done < <(buffer_keys)
+    fi
 }
 rollback_command() { require_root; with_lock; local dir; dir=$(find_transaction); [[ -n $dir ]] || { printf 'NO_TRANSACTION\n'; return 1; }; rollback_transaction "$dir"; }
 recover_command() { require_root; with_lock; local dir state; dir=$(find_unfinished); [[ -n $dir && -f $dir/state ]] || { printf 'NO_UNFINISHED_TRANSACTION\n'; return 1; }; state=$(<"$dir/state"); printf ROLLING_BACK >"$dir/state"; rollback_transaction "$dir"; }

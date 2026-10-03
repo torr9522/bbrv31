@@ -2,7 +2,7 @@
 
 BBRv3 Universal 是面向 Debian 12 AMD64 VPS 的 BBRv3/XanMod 网络调优工具。它保留原版 BBRv3 的 sysctl、buffer、FQ、RPS/RFS、TCPMSS、Route IW、THP、nofile 和 swap 能力，并加入适用性检测、资源 ownership、transaction、持久化、漂移保护、回滚和显式恢复。
 
-> **当前正式版本：`v0.2.0`**。本版新增 System Default TCP Buffer 模式；Asia、Overseas 和 Global 行为保持不变，Global 仍是默认选项。首次在重要服务器使用前，请确保有 VPS 控制台或 fallback/reinstall 能力。
+> **当前正式版本：`v0.2.1`**。v0.2.0 新增了 System Default TCP Buffer 模式；v0.2.1 修正 System 重启后 readback 对 Kernel 合法重算值的误报。Asia、Overseas 和 Global 行为保持不变，Global 仍是默认选项。首次在重要服务器使用前，请确保有 VPS 控制台或 fallback/reinstall 能力。
 
 ## Quick Start
 
@@ -23,7 +23,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/torr9522/bbrv31/master/bbrv3
 
 “安装内核”和“网络优化”是两个独立阶段。菜单 1 不会静默执行测速、地区选择或网络参数修改；菜单 3 只在 formal BBRv3 kernel 正在运行时执行完整调优。
 
-内部 bootstrap 安装入口下载并校验固定的 `v0.2.0` Release payload 和 formal kernel package：
+内部 bootstrap 安装入口下载并校验固定的 `v0.2.1` Release payload 和 formal kernel package：
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/torr9522/bbrv31/master/bootstrap.sh)
@@ -147,7 +147,9 @@ System 模式不等于关闭 BBR、FQ 或其它优化。其余 27 项通用 sysc
 
 仍待扩展的 coverage 包括 native 512 MiB host、更多 nft-only provider 以及更多 RSS/IRQ layouts。这些不是当前正式版本的功能 blocker。0.x 版本仍建议重要服务器保持控制台或重装能力。
 
-当前正式 Release：<https://github.com/torr9522/bbrv31/releases/tag/v0.2.0>
+当前正式 Release：<https://github.com/torr9522/bbrv31/releases/tag/v0.2.1>
+
+System Buffer 首个正式 Release（冻结且保留不变）：<https://github.com/torr9522/bbrv31/releases/tag/v0.2.0>
 
 上一正式 Release（冻结且保留不变）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.10>
 
@@ -164,7 +166,7 @@ System 模式不等于关闭 BBR、FQ 或其它优化。其余 27 项通用 sysc
 源码方式安装（高级用户）：
 
 ```bash
-tmp=$(mktemp -d) && git clone --depth 1 --branch v0.2.0 https://github.com/torr9522/bbrv31.git "$tmp/bbrv31" && sudo bash "$tmp/bbrv31/bbrv3.sh"
+tmp=$(mktemp -d) && git clone --depth 1 --branch v0.2.1 https://github.com/torr9522/bbrv31.git "$tmp/bbrv31" && sudo bash "$tmp/bbrv31/bbrv3.sh"
 ```
 
 固定安装入口位于 `master`，但默认 payload 始终是显式固定的正式 Release。以后版本升级只需更新 bootstrap 的默认版本；用户使用的 URL 不变。`v0.1.0-rc1` tag 和 release asset 永久保留且不被修改。
