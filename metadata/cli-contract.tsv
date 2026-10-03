@@ -1,6 +1,6 @@
 command	alias_of	public	root_required	mutation_scope	reboot_capable	handler	status
-install	one-click --apply	YES	YES	kernel decision plus owned sysctl/network/system/persistence	YES	orchestration_install	IMPLEMENTED
-optimize	apply	YES	YES	resolved current policy	NO	orchestration_optimize	IMPLEMENTED
+install	menu 1	YES	YES	formal kernel lifecycle only	YES	orchestration_install	IMPLEMENTED
+optimize	menu 3	YES	YES	interactive original BBRv3 tuning plus owned safety	NO	orchestration_optimize	IMPLEMENTED
 apply	apply-sysctl/apply-network/apply-resources	YES	YES	resolved owned resources	NO	orchestration_apply	IMPLEMENTED
 rollback	rollback-all	YES	YES	owned resources, drift blocking	NO	orchestration_rollback	IMPLEMENTED
 recover	recover-all	YES	YES	explicit owned recovery	NO	orchestration_recover	IMPLEMENTED

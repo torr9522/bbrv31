@@ -5,7 +5,19 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../recovery" && pwd)/network-baseli
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../recovery" && pwd)/network-ownership.sh"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../verify" && pwd)/network.sh"
 
-network_apply_qdisc() { local d=$1; [[ $(awk -F= '$1=="qdisc.decision"{print $2}' "$d/desired.env") == CANDIDATE ]] || return 0; local dev; dev=$(<"$d/interface"); [[ $dev != UNKNOWN && -n $dev ]] || return 1; network_tc_mutation qdisc replace dev "$dev" root fq; }
+network_apply_qdisc() {
+    local d=$1 dev mq queues i
+    [[ $(awk -F= '$1=="qdisc.decision"{print $2}' "$d/desired.env") == CANDIDATE ]] || return 0
+    dev=$(<"$d/interface"); [[ $dev != UNKNOWN && -n $dev ]] || return 1
+    mq=$(awk -F= '$1=="qdisc.mq"{print $2}' "$d/desired.env")
+    if [[ $mq == YES ]]; then
+        queues=$(awk -F= '$1=="qdisc.queue_count"{print $2}' "$d/desired.env")
+        [[ $queues =~ ^[1-9][0-9]*$ ]] || return 1
+        for ((i=1; i<=queues; i++)); do network_tc_mutation qdisc replace dev "$dev" parent ":$i" fq || return 1; done
+    else
+        network_tc_mutation qdisc replace dev "$dev" root fq
+    fi
+}
 network_apply_route() {
     local d=$1 dec route clean; dec=$(awk -F= '$1=="route.decision"{print $2}' "$d/desired.env"); [[ $dec == CANDIDATE ]] || return 0
     route=$(<"$d/route.baseline"); clean=$(sed -E 's/[[:space:]]+initcwnd[[:space:]]+[0-9]+//g; s/[[:space:]]+initrwnd[[:space:]]+[0-9]+//g' <<<"$route"); [[ -n $clean ]] || return 1

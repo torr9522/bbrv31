@@ -24,13 +24,13 @@ if [[ $profile == asia ]]; then
   case $bandwidth in
     100) buffer=6;; 200) buffer=8;; 300) buffer=10;; 500) buffer=12;; 700) buffer=14;;
     1000) buffer=16;; 1500) buffer=20;; 2000) buffer=24;; 2500) buffer=28;;
-    *) (( bandwidth < 500 )) && buffer=8 || (( bandwidth < 1000 )) && buffer=12 || (( bandwidth < 2000 )) && buffer=16 || (( bandwidth < 5000 )) && buffer=24 || (( bandwidth < 10000 )) && buffer=28 || buffer=32;;
+    *) if (( bandwidth < 500 )); then buffer=8; elif (( bandwidth < 1000 )); then buffer=12; elif (( bandwidth < 2000 )); then buffer=16; elif (( bandwidth < 5000 )); then buffer=24; elif (( bandwidth < 10000 )); then buffer=28; else buffer=32; fi;;
   esac
 else
   case $bandwidth in
     100) buffer=8;; 200) buffer=16;; 300) buffer=20;; 500) buffer=32;; 700) buffer=48;;
     1000|1500|2000|2500) buffer=64;;
-    *) (( bandwidth < 500 )) && buffer=16 || (( bandwidth < 1000 )) && buffer=48 || buffer=64;;
+    *) if (( bandwidth < 500 )); then buffer=16; elif (( bandwidth < 1000 )); then buffer=48; else buffer=64; fi;;
   esac
 fi
 if (( ram_mb < 2048 )); then vm_swappiness=20; vm_dirty_ratio=20; vm_min_free_kbytes=32768; low_memory=YES; else vm_swappiness=5; vm_dirty_ratio=15; vm_min_free_kbytes=65536; low_memory=NO; fi

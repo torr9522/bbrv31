@@ -9,7 +9,13 @@ network_rollback_transaction() {
     desired=$(awk -F= '$1=="route.decision"{print $2}' "$d/desired.env")
     if [[ $desired == CANDIDATE ]]; then current=$(network_route_text); if [[ ${NETWORK_FORCE_RECOVERY:-NO} == YES ]]; then local base_id current_id; base_id=$(sed -E 's/[[:space:]]+initcwnd[[:space:]]+[0-9]+//g; s/[[:space:]]+initrwnd[[:space:]]+[0-9]+//g' "$d/route.baseline" | awk '{$1=$1; print}'); current_id=$(sed -E 's/[[:space:]]+initcwnd[[:space:]]+[0-9]+//g; s/[[:space:]]+initrwnd[[:space:]]+[0-9]+//g' <<<"$current" | awk '{$1=$1; print}'); [[ $base_id == "$current_id" ]] || { printf HARD_CONFLICT >&2; printf DRIFTED >"$d/state"; return 1; }; else grep -q 'initcwnd 32' <<<"$current" || { printf ROUTE_DRIFT >&2; printf DRIFTED >"$d/state"; return 1; }; fi; fi
     if [[ $(awk -F= '$1=="qdisc.decision"{print $2}' "$d/desired.env") == CANDIDATE ]]; then
-        local base; base=$(awk 'NF{print;exit}' "$d/qdisc.baseline"); [[ $base == *pfifo_fast* || $base == *pfifo* ]] && network_tc_mutation qdisc replace dev "$dev" root pfifo_fast
+        local base queues i; base=$(awk 'NF{print;exit}' "$d/qdisc.baseline")
+        if [[ $base == *fq_codel* ]]; then network_tc_mutation qdisc replace dev "$dev" root fq_codel
+        elif [[ $base == *pfifo_fast* || $base == *pfifo* ]]; then network_tc_mutation qdisc replace dev "$dev" root pfifo_fast
+        elif [[ $base == *' mq '* || $base == 'qdisc mq '* ]]; then
+            queues=$(awk -F= '$1=="qdisc.queue_count"{print $2}' "$d/desired.env")
+            for ((i=1; i<=queues; i++)); do network_tc_mutation qdisc del dev "$dev" parent ":$i" 2>/dev/null || true; done
+        fi
     fi
     if [[ $(awk -F= '$1=="route.decision"{print $2}' "$d/desired.env") == CANDIDATE ]]; then
         local route; route=$(<"$d/route.baseline"); read -r -a args <<<"$route"; network_ip_mutation route replace "${args[@]}"

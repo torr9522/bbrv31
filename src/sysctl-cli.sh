@@ -8,11 +8,12 @@ source "$ROOT/src/recovery/rollback.sh"
 
 require_root() { [[ $EUID -eq 0 || ${BBRV3_MOCK:-0} == 1 || $BBRV3_SYSCTL_ROOT != / ]] || { printf 'ROOT_REQUIRED\n' >&2; return 1; }; }
 parse_args() {
-    REQUESTED_PROFILE=ASIA_ORIGINAL REQUESTED_BANDWIDTH=1000 REQUESTED_RAM_MB= REQUESTED_DETAIL=NO FORCE_RECOVERY=NO
+    REQUESTED_PROFILE=ASIA_ORIGINAL REQUESTED_BANDWIDTH=1000 REQUESTED_BUFFER_MB= REQUESTED_RAM_MB= REQUESTED_DETAIL=NO FORCE_RECOVERY=NO
     while [[ $# -gt 0 ]]; do
       case $1 in
         --profile) REQUESTED_PROFILE=$2; shift 2;;
         --bandwidth) REQUESTED_BANDWIDTH=$2; shift 2;;
+        --buffer-mib) REQUESTED_BUFFER_MB=$2; shift 2;;
         --ram-mb) REQUESTED_RAM_MB=$2; shift 2;;
         --fixture) export BBRV3_FIXTURE_ROOT=$2; shift 2;;
         --detail) REQUESTED_DETAIL=YES; shift;;
@@ -23,7 +24,7 @@ parse_args() {
     done
 }
 make_plan() {
-    local dir=$1; REQUESTED_PROFILE=${REQUESTED_PROFILE:-ASIA_ORIGINAL} REQUESTED_BANDWIDTH=${REQUESTED_BANDWIDTH:-1000} REQUESTED_RAM_MB=${REQUESTED_RAM_MB:-} \
+    local dir=$1; REQUESTED_PROFILE=${REQUESTED_PROFILE:-ASIA_ORIGINAL} REQUESTED_BANDWIDTH=${REQUESTED_BANDWIDTH:-1000} REQUESTED_BUFFER_MB=${REQUESTED_BUFFER_MB:-} REQUESTED_RAM_MB=${REQUESTED_RAM_MB:-} \
       "$ROOT/src/policy/sysctl-plan.sh" --output "$dir/desired.tsv"
 }
 format_plan() {

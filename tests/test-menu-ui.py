@@ -44,7 +44,7 @@ for cols in (60, 80, 100, 120):
     raw, plain = render(cols)
     assert '\x1b[1;32m' in raw and '\x1b[1;31m' in raw
     install_line = next(line for line in plain.splitlines() if '1. 安装' in line)
-    assert ('2. 安装' in install_line) == (cols >= 96)
+    assert ('2. 检查' in install_line) == (cols >= 96)
     target = snapshots / f'installed-{cols}col.txt'
     if '--update' in sys.argv:
         snapshots.mkdir(parents=True, exist_ok=True)

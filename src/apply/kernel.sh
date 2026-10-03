@@ -14,7 +14,7 @@ kernel_set_persistent_default() {
     local grubenv=${BBRV3_GRUB_ENV_FILE:-/boot/grub/grubenv}
     local formal=${BBRV3_FORMAL_KERNEL:-6.18.54-x64v3-xanmod1}
     local current_default saved_entry current_defaults current_grubenv candidate
-    [[ -r $defaults && -r $grubenv ]] || return 1
+    [[ -n $entry && -r $defaults && -r $grubenv ]] || return 1
     mkdir -p "$d"
     current_default=$(sed -n 's/^GRUB_DEFAULT=//p' "$defaults" | head -1)
     if [[ $current_default == *"$formal"* ]]; then

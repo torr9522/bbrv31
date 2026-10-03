@@ -63,9 +63,9 @@ render_ui() {
     printf '%sBBRv3 Universal 一键安装管理脚本%s %s[v%s]%s\n' "$C_CYAN" "$C_RESET" "$C_RED" "$(<"$ROOT/VERSION")" "$C_RESET"
     printf '%s当前支持：%s%sDebian 12 AMD64%s\n' "$C_BLUE" "$C_RESET" "$C_WHITE" "$C_RESET"
     ui_section 'BBRv3 安装'
-    ui_pair 1 '安装 BBRv3 内核 + AUTO' 2 '安装 / 修复 BBRv3 内核'
+    ui_pair 1 '安装 / 修复 BBRv3 内核' 2 '检查 / 修复 BBRv3 内核'
     ui_section '优化与状态'
-    ui_pair 3 'AUTO 自动优化' 4 '查看详细状态'
+    ui_pair 3 'BBRv3 网络优化' 4 '查看详细状态'
     ui_pair 5 '查看内核状态'
     ui_section '恢复与维护'
     ui_pair 6 '回滚本项目优化' 7 '强制恢复本项目基线'

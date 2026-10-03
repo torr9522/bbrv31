@@ -3,7 +3,7 @@ set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../core" && pwd)/paths.sh"
 
 make_sysctl_plan() {
-    local input=$1 output=$2 profile=${REQUESTED_PROFILE:-auto} bw=${REQUESTED_BANDWIDTH:-1000} ram=${REQUESTED_RAM_MB:-}
+    local input=$1 output=$2 profile=${REQUESTED_PROFILE:-auto} bw=${REQUESTED_BANDWIDTH:-1000} ram=${REQUESTED_RAM_MB:-} requested_buffer=${REQUESTED_BUFFER_MB:-}
     local detect=$BBRV3_PROJECT_ROOT/.phase3-detect.$$
     "$BBRV3_PROJECT_ROOT/src/detect/all.sh" >"$detect"
     [[ -n $ram ]] && sed -i "s/^memory.total_mib=.*/memory.total_mib=$ram/" "$detect"
@@ -11,6 +11,7 @@ make_sysctl_plan() {
     local selected buffer swappiness dirty minfree buffer_bytes
     selected=$(awk -F= '$1=="profile"{print $2; exit}' <<<"$decision")
     buffer=$(awk -F= '$1=="buffer_original_mb"{print $2; exit}' <<<"$decision")
+    if [[ -n $requested_buffer ]]; then [[ $requested_buffer =~ ^[0-9]+$ && $requested_buffer -gt 0 ]] || return 2; buffer=$requested_buffer; fi
     swappiness=$(awk -F= '$1=="vm_swappiness"{print $2; exit}' <<<"$decision")
     dirty=$(awk -F= '$1=="vm_dirty_ratio"{print $2; exit}' <<<"$decision")
     minfree=$(awk -F= '$1=="vm_min_free_kbytes"{print $2; exit}' <<<"$decision")

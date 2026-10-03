@@ -6,7 +6,7 @@ network_plan() {
     local cpu=${1:-1} qroot=${2:-unknown} mq=${3:-NO} fq=${4:-NO} cake=${5:-NO} htb=${6:-NO} tbf=${7:-NO} filters=${8:-NO} classes=${9:-NO} queues=${10:-0} rss=${11:-UNAVAILABLE} forward=${12:-0} backend=${13:-NONE} route_count=${14:-0} route=${15:-}
     local qdecision qreason rdecision rreason rpsdecision rpsreason mdecision mreason ifname
     if [[ $cake == YES || $htb == YES || $tbf == YES || $filters == YES || $classes == YES ]]; then qdecision=BLOCKED; qreason=EXISTING_QDISC_OWNER_OR_COMPLEX_TREE
-    elif [[ $mq == YES ]]; then [[ $fq == YES ]] && qdecision=NOOP || qdecision=BLOCKED; qreason=MQ_ROOT_PRESERVED_LEAF_REVIEW
+    elif [[ $mq == YES ]]; then [[ $fq == YES ]] && qdecision=NOOP || qdecision=CANDIDATE; qreason=MQ_ROOT_PRESERVE_AND_APPLY_FQ_LEAVES
     elif [[ $qroot == fq ]]; then qdecision=NOOP; qreason=ALREADY_FQ
     elif [[ $qroot == fq_codel ]]; then qdecision=CANDIDATE; qreason=FQ_CODEL_TO_FQ_SIMPLE_ROOT
     elif [[ $qroot == pfifo_fast || $qroot == pfifo ]]; then qdecision=CANDIDATE; qreason=SIMPLE_SINGLE_QUEUE
@@ -27,7 +27,7 @@ network_plan() {
     else rdecision=SKIP; rreason=NO_IPV4_DEFAULT
     fi
     ifname=$(awk '{for(i=1;i<NF;i++) if($i=="dev"){print $(i+1); exit}}' <<<"$route")
-    printf 'qdisc.decision=%s\nqdisc.reason=%s\nqdisc.interface=%s\n' "$qdecision" "$qreason" "${ifname:-UNKNOWN}"
+    printf 'qdisc.decision=%s\nqdisc.reason=%s\nqdisc.interface=%s\nqdisc.mq=%s\nqdisc.queue_count=%s\n' "$qdecision" "$qreason" "${ifname:-UNKNOWN}" "$mq" "$queues"
     printf 'rps.decision=%s\nrps.reason=%s\n' "$rpsdecision" "$rpsreason"
     printf 'mss.decision=%s\nmss.reason=%s\nmss.backend=%s\n' "$mdecision" "$mreason" "$backend"
     printf 'route.decision=%s\nroute.reason=%s\nroute.target=32/32\n' "$rdecision" "$rreason"
