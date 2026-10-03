@@ -5,11 +5,8 @@ ROOT=${BBRV3_UNIVERSAL_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}
 PROJECT_ROOT=${BBRV3_MENU_PROJECT_ROOT:-/opt/bbrv3-universal}
 FORMAL_KERNEL=6.18.54-x64v3-xanmod1
 
-if [[ -t 1 ]]; then
-    C_RESET=$'\033[0m'; C_TITLE=$'\033[1;36m'; C_SECTION=$'\033[1;34m'; C_OK=$'\033[1;32m'; C_WARN=$'\033[1;33m'; C_ERR=$'\033[1;31m'
-else
-    C_RESET= C_TITLE= C_SECTION= C_OK= C_WARN= C_ERR=
-fi
+source "$ROOT/src/menu-ui.sh"
+ui_init
 
 say() { printf '%s\n' "$*"; }
 pause() { [[ -t 0 ]] || return 0; printf '\n按 Enter 返回主菜单...'; read -r _ || true; }
@@ -26,10 +23,14 @@ detect_state() {
     dpkg-query -W -f='${Status}' "linux-image-$FORMAL_KERNEL" 2>/dev/null | grep -q 'install ok installed' && FORMAL_KERNEL_INSTALLED=YES || true
     FORMAL_KERNEL_RUNNING=NO
     [[ $RUNNING_KERNEL == "$FORMAL_KERNEL" ]] && FORMAL_KERNEL_RUNNING=YES
-    FALLBACK_KERNEL=$(dpkg-query -W -f='${Package}\n' 'linux-image-*' 2>/dev/null | grep -v "$FORMAL_KERNEL" | sed 's/^linux-image-//' | head -1 || true)
+    FALLBACK_KERNELS=$(dpkg-query -W -f='${Package}\n' 'linux-image-*' 2>/dev/null | grep -v "$FORMAL_KERNEL" | sed 's/^linux-image-//' | grep -E '^[0-9]' | sort -u || true)
+    FALLBACK_KERNEL=$(printf '%s\n' "$FALLBACK_KERNELS" | head -1)
+    FALLBACK_COUNT=$(printf '%s\n' "$FALLBACK_KERNELS" | awk 'NF {n++} END {print n+0}')
     CC_ACTIVE=$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null || printf unknown)
     CC_AVAILABLE=$(sysctl -n net.ipv4.tcp_available_congestion_control 2>/dev/null || printf unknown)
-    QDISC=$(tc qdisc show 2>/dev/null | awk '$1=="qdisc" && $6=="root" && $5!="lo" {print $2; exit}' || true)
+    QDISC=$(tc qdisc show 2>/dev/null | awk '
+        $1=="qdisc" && $5!="lo" { if ($6=="root") root=$2; else if ($6=="parent") leaf[$2]=1 }
+        END { if (root=="mq" && leaf["fq"]) print "fq (mq)"; else print root }' || true)
     [[ -n $QDISC ]] || QDISC=unknown
     PROJECT_INSTALLED=NO
     [[ -x $PROJECT_ROOT/bbrv3-universal.sh ]] && PROJECT_INSTALLED=YES
@@ -48,32 +49,49 @@ detect_state() {
 
 kernel_status_text() {
     if [[ $FORMAL_KERNEL_RUNNING == YES ]]; then
-        printf '%sBBRv3 Kernel：已安装并运行%s' "$C_OK" "$C_RESET"
+        printf '%sBBRv3 内核已安装并运行%s' "$C_GREEN" "$C_RESET"
     elif [[ $FORMAL_KERNEL_INSTALLED == YES ]]; then
-        printf '%sBBRv3 Kernel：已安装，当前未运行%s' "$C_WARN" "$C_RESET"
+        printf '%sBBRv3 内核已安装，当前未运行%s' "$C_YELLOW" "$C_RESET"
     else
-        printf '%sBBRv3 Kernel：未安装%s' "$C_WARN" "$C_RESET"
+        printf '%sBBRv3 内核未安装（当前运行其他内核）%s' "$C_YELLOW" "$C_RESET"
     fi
 }
 
-render() {
-    detect_state
-    clear 2>/dev/null || true
-    printf '%sBBRv3 Universal 一键安装管理脚本 [v%s]%s\n' "$C_TITLE" "$(<"$ROOT/VERSION")" "$C_RESET"
-    printf '%s当前支持：Debian 12 AMD64%s\n\n' "$C_SECTION" "$C_RESET"
-    printf '%s---------------- BBRv3 安装 ----------------%s\n' "$C_SECTION" "$C_RESET"
-    printf '  1. 安装 BBRv3 Kernel + AUTO 自动优化\n'
-    printf '  2. 安装 / 修复 BBRv3 Kernel\n\n'
-    printf '%s---------------- 优化与状态 ----------------%s\n' "$C_SECTION" "$C_RESET"
-    printf '  3. AUTO 自动优化\n  4. 查看详细状态\n  5. 查看 Kernel 状态\n\n'
-    printf '%s---------------- 恢复与维护 ----------------%s\n' "$C_SECTION" "$C_RESET"
-    printf '  6. 回滚本项目优化\n  7. 强制恢复本项目基线\n  8. 高级设置\n  9. 更新 BBRv3 Universal\n 10. 卸载 BBRv3 Universal\n  0. 退出\n\n'
-    printf '%s信息：%s | %s | %s | %s%s\n' "$C_TITLE" "$OS_NAME" "$VIRT" "$ARCH" "$RUNNING_KERNEL" "$C_RESET"
-    printf '状态：'; kernel_status_text; printf '\n'
-    printf '拥塞算法：%s\n队列算法：%s\n' "$CC_ACTIVE" "$QDISC"
-    printf 'Fallback Kernel：%s\n' "${FALLBACK_KERNEL:-未识别} [已保留]"
-    printf '项目：%s%s%s\n持久化：%s\n最新版本：%s\n\n' "$([[ $PROJECT_INSTALLED == YES ]] && printf 已安装 || printf 未安装)" "$([[ $PROJECT_INSTALLED == YES ]] && printf ' ' || true)" "$([[ $PROJECT_INSTALLED == YES ]] && printf "[$PROJECT_VERSION]" || true)" "$PERSISTENCE" "$LATEST_VERSION"
+render_ui() {
+    ui_layout
+    [[ -t 1 && -n ${TERM:-} && $TERM != dumb ]] && clear 2>/dev/null || true
+    printf '%sBBRv3 Universal 一键安装管理脚本%s %s[v%s]%s\n' "$C_CYAN" "$C_RESET" "$C_RED" "$(<"$ROOT/VERSION")" "$C_RESET"
+    printf '%s当前支持：%s%sDebian 12 AMD64%s\n' "$C_BLUE" "$C_RESET" "$C_WHITE" "$C_RESET"
+    ui_section 'BBRv3 安装'
+    ui_pair 1 '安装 BBRv3 内核 + AUTO' 2 '安装 / 修复 BBRv3 内核'
+    ui_section '优化与状态'
+    ui_pair 3 'AUTO 自动优化' 4 '查看详细状态'
+    ui_pair 5 '查看内核状态'
+    ui_section '恢复与维护'
+    ui_pair 6 '回滚本项目优化' 7 '强制恢复本项目基线'
+    ui_pair 8 '高级设置' 9 '更新 BBRv3 Universal'
+    ui_item 10 '卸载 BBRv3 Universal' "$C_YELLOW"; printf '\n'
+    ui_item 0 '退出'; printf '\n'
+    ui_separator
+    case $VIRT in kvm) display_virt=KVM;; microsoft) display_virt=Microsoft;; amazon) display_virt=Amazon;; none) display_virt=物理机;; *) display_virt=$VIRT;; esac
+    printf '%s信息：%s%s | %s | %s | %s\n' "$C_CYAN" "$C_RESET" "$OS_NAME" "$display_virt" "$ARCH" "$RUNNING_KERNEL"
+    printf '%s状态：%s' "$C_CYAN" "$C_RESET"; kernel_status_text
+    if (( FALLBACK_COUNT > 0 )); then
+        printf ' | %s原系统内核已保留（%s个）%s\n' "$C_GREEN" "$FALLBACK_COUNT" "$C_RESET"
+    else
+        printf ' | %s原系统内核未识别%s\n' "$C_YELLOW" "$C_RESET"
+    fi
+    printf '%s网络：%s%s%s | %s%s\n' "$C_CYAN" "$C_RESET" "$C_GREEN" "$CC_ACTIVE" "$QDISC" "$C_RESET"
+    local project_text=未安装 project_color=$C_YELLOW persistence_color=$C_YELLOW latest_color=$C_YELLOW
+    [[ $PROJECT_INSTALLED == YES ]] && { project_text="v$PROJECT_VERSION"; project_color=$C_GREEN; }
+    [[ $PERSISTENCE == 已启用 ]] && persistence_color=$C_GREEN
+    [[ $LATEST_VERSION == "$PROJECT_VERSION" ]] && latest_color=$C_GREEN
+    local latest_text=$LATEST_VERSION
+    [[ $LATEST_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && latest_text="v$LATEST_VERSION"
+    printf '%s项目：%s%s%s%s | 持久化 %s%s%s | 最新 %s%s%s\n' "$C_CYAN" "$C_RESET" "$project_color" "$project_text" "$C_RESET" "$persistence_color" "$PERSISTENCE" "$C_RESET" "$latest_color" "$latest_text" "$C_RESET"
+    ui_separator
 }
+render() { detect_state; render_ui; }
 
 require_root() { [[ $EUID -eq 0 ]] || { printf '%s需要 root 权限。%s\n' "$C_ERR" "$C_RESET"; pause; return 1; }; }
 payload_install_if_needed() {
@@ -91,11 +109,11 @@ run_action() {
     case $action in
         install) "$ROOT/bbrv3-universal.sh" install || rc=$?;;
         optimize) "$ROOT/bbrv3-universal.sh" optimize || rc=$?;;
-        status) "$ROOT/bbrv3-universal.sh" status-detail || rc=$?;;
-        kernel) "$ROOT/bbrv3-universal.sh" kernel-status || rc=$?;;
+        status) ui_section "详细状态"; "$ROOT/bbrv3-universal.sh" status-detail || rc=$?;;
+        kernel) ui_section "内核状态"; "$ROOT/bbrv3-universal.sh" kernel-status || rc=$?;;
         rollback) "$ROOT/bbrv3-universal.sh" rollback || rc=$?;;
         recover) "$ROOT/bbrv3-universal.sh" recover || rc=$?;;
-        advanced) "$ROOT/bbrv3-universal.sh" advanced || rc=$?;;
+        advanced) ui_section "高级设置"; "$ROOT/bbrv3-universal.sh" advanced || rc=$?;;
         uninstall) "$ROOT/bbrv3-universal.sh" uninstall || rc=$?;;
         update) "$ROOT/bbrv3.sh" --update || rc=$?;;
     esac
@@ -133,4 +151,4 @@ main() {
         esac
     done
 }
-main "$@"
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then main "$@"; fi
