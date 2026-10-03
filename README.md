@@ -2,7 +2,7 @@
 
 BBRv3 Universal 是面向 Debian 12 AMD64 VPS 的 BBRv3/XanMod 网络调优工具。它保留原版 BBRv3 的 sysctl、buffer、FQ、RPS/RFS、TCPMSS、Route IW、THP、nofile 和 swap 能力，并加入适用性检测、资源 ownership、transaction、持久化、漂移保护、回滚和显式恢复。
 
-> **当前正式版本：`v0.1.7`**。这是修复已有自定义内核和显式 `GRUB_DEFAULT` 环境下 formal kernel 持久启动选择后的 Debian 12 AMD64 正式维护版本。首次在重要服务器使用前，请确保有 VPS 控制台或 fallback/reinstall 能力。
+> **当前正式版本：`v0.1.8`**。这是交互菜单 UI/UX 维护版本，保留 v0.1.7 已验证的内核、GRUB、AUTO 和持久化行为。首次在重要服务器使用前，请确保有 VPS 控制台或 fallback/reinstall 能力。
 
 ## Quick Start
 
@@ -12,7 +12,9 @@ BBRv3 Universal 是面向 Debian 12 AMD64 VPS 的 BBRv3/XanMod 网络调优工�
 bash <(curl -fsSL https://raw.githubusercontent.com/torr9522/bbrv31/master/bbrv3.sh)
 ```
 
-菜单选择安装后才会部署到 `/opt/bbrv3-universal`。内部 bootstrap 安装入口仍会下载并校验固定的 `v0.1.7` Release payload 和 formal kernel package：
+宽窗口自动显示双列菜单，窄窗口显示单列；底部实时显示系统、内核、BBR、队列和版本状态。支持 `NO_COLOR`，无网络时仍可使用本地菜单。
+
+菜单选择安装后才会部署到 `/opt/bbrv3-universal`。内部 bootstrap 安装入口仍会下载并校验固定的 `v0.1.8` Release payload 和 formal kernel package：
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/torr9522/bbrv31/master/bootstrap.sh)
@@ -123,9 +125,9 @@ AUTO 会根据 CPU、网卡 RX queues/RSS、内存、swap、默认 route、forwa
 
 仍待扩展的 coverage 包括 native 512 MiB host、更多 nft-only provider 以及更多 RSS/IRQ layouts。这些不是当前正式版本的功能 blocker。0.x 版本仍建议重要服务器保持控制台或重装能力。
 
-当前正式 Release：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.7>
+当前正式 Release：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.8>
 
-上一正式 Release（保留不变）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.6>
+上一正式 Release（保留不变）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.7>
 
 历史 RC1 Release（冻结，不再作为推荐安装版本）：<https://github.com/torr9522/bbrv31/releases/tag/v0.1.0-rc1>
 
@@ -134,7 +136,7 @@ AUTO 会根据 CPU、网卡 RX queues/RSS、内存、swap、默认 route、forwa
 源码方式安装（高级用户）：
 
 ```bash
-tmp=$(mktemp -d) && git clone --depth 1 --branch v0.1.7 https://github.com/torr9522/bbrv31.git "$tmp/bbrv31" && sudo bash "$tmp/bbrv31/bbrv3.sh"
+tmp=$(mktemp -d) && git clone --depth 1 --branch v0.1.8 https://github.com/torr9522/bbrv31.git "$tmp/bbrv31" && sudo bash "$tmp/bbrv31/bbrv3.sh"
 ```
 
 固定安装入口位于 `master`，但默认 payload 始终是显式固定的正式 Release。以后版本升级只需更新 bootstrap 的默认版本；用户使用的 URL 不变。`v0.1.0-rc1` tag 和 release asset 永久保留且不被修改。
