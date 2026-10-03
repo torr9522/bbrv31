@@ -2,6 +2,7 @@ profile	source_function	menu	persistent	behavior
 ASIA_ORIGINAL	bbr_configure_direct	3	YES	Asia original buffer table and 31 sysctl
 OVERSEAS_ORIGINAL	bbr_configure_direct	3	YES	Overseas original buffer table and 31 sysctl
 GLOBAL_MIXED	GLOBAL_MIXED_OVERSEAS_CURVE_V1	3	YES	Distinct mixed proxy semantic reusing the audited Overseas curve
+SYSTEM_DEFAULT	PROJECT_UNMANAGED_BASELINE_RESTORED_V1	3	YES	27 managed sysctls; four TCP Buffer parameters restored then released
 LOW_SPEC	optimize_low_spec	AUDIT_ONLY	NO	Removed standalone temporary profile; canonical low-memory branch remains active
 XINCHENDAHAI	optimize_xinchendahai	AUDIT_ONLY	NO	Removed temporary profile outside canonical BBRv3 direct workflow
 REALITY	optimize_reality_ultimate	AUDIT_ONLY	NO	Removed temporary profile containing unrelated application tuning

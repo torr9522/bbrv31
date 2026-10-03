@@ -3,25 +3,31 @@ set -euo pipefail
 ROOT=${BBRV3_UNIVERSAL_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}
 source "$ROOT/src/orchestration.sh"
 status_ui() {
-    local state=${BBRV3_STATE_ROOT:-/var/lib/bbrv3-universal}/optimization/state.env optimization=NOT_APPLIED profile=NONE network_type=NONE
+    local state=${BBRV3_STATE_ROOT:-/var/lib/bbrv3-universal}/optimization/state.env optimization=NOT_APPLIED profile=NONE network_type=NONE buffer_policy=NONE buffer_display=N/A
     if [[ -r $state ]]; then
         optimization=$(awk -F= '$1=="optimization_stage"{print $2}' "$state")
         profile=$(awk -F= '$1=="profile"{print $2}' "$state")
         network_type=$(awk -F= '$1=="network_type"{print toupper($2)}' "$state")
+        buffer_policy=$(awk -F= '$1=="buffer_policy"{print toupper($2)}' "$state")
+        buffer_display=$(awk -F= '$1=="buffer_mib"{print $2}' "$state")
         if [[ -z $network_type ]]; then
             case $profile in
                 ASIA_ORIGINAL) network_type=ASIA;;
                 OVERSEAS_ORIGINAL) network_type=OVERSEAS;;
                 GLOBAL_MIXED) network_type=GLOBAL;;
+                SYSTEM_DEFAULT) network_type=SYSTEM;;
                 *) network_type=NONE;;
             esac
         fi
+        [[ -n $buffer_policy ]] || buffer_policy=$network_type
+        [[ -n $buffer_display ]] || buffer_display=N/A
+        [[ $buffer_policy == SYSTEM ]] && buffer_display='system / provider managed'
     fi
-    printf 'BBRv3 Universal\nKernel: %s\nCPU level: %s\nProfile: %s\nNetwork type: %s\nNetwork optimization: %s\nNetwork: plan with ownership/drift guards\nSystem: sysctl/THP/nofile/swap layers available\nPersistence: owned reconcile\nRollback: transaction based\n' "$(uname -r)" "$(awk -F= '$1=="cpu.level"{print $2}' <("$ROOT/src/detect/all.sh" 2>/dev/null) || printf unknown)" "$profile" "$network_type" "$optimization"
+    printf 'BBRv3 Universal\nKernel: %s\nCPU level: %s\nProfile: %s\nNetwork type: %s\nBuffer policy: %s\nTCP Buffer: %s\nNetwork optimization: %s\nNetwork: plan with ownership/drift guards\nSystem: sysctl/THP/nofile/swap layers available\nPersistence: owned reconcile\nRollback: transaction based\n' "$(uname -r)" "$(awk -F= '$1=="cpu.level"{print $2}' <("$ROOT/src/detect/all.sh" 2>/dev/null) || printf unknown)" "$profile" "$network_type" "$buffer_policy" "$buffer_display" "$optimization"
 }
 detail_ui() { status_ui; "$ROOT/bbrv3-universal.sh" detect; "$ROOT/bbrv3-universal.sh" plan-network; "$ROOT/bbrv3-universal.sh" plan-resources; }
 one_click() { if [[ ${1:-} == --apply ]]; then orchestration_apply "${@:2}"; else printf 'one_click=PLAN_ONLY\nprofile=AUTO\nsteps=preflight,kernel,sysctl,network,system,persist,verify\nsystem_mutation=NO\n'; fi; }
-advanced_ui() { printf '%s\n' 'PROFILE: ASIA_ORIGINAL OVERSEAS_ORIGINAL GLOBAL_MIXED COMPAT_ORIGINAL (temporary upstream profiles are audit-only)' 'NETWORK: bandwidth buffer fq qdisc rps-rfs mss route-iw' 'SYSTEM: thp vm nofile swap' 'KERNEL: install update uninstall fallback status' 'SAFETY: baseline ownership transaction drift rollback verify recover'; }
+advanced_ui() { printf '%s\n' 'PROFILE: ASIA_ORIGINAL OVERSEAS_ORIGINAL GLOBAL_MIXED SYSTEM_DEFAULT COMPAT_ORIGINAL (temporary upstream profiles are audit-only)' 'NETWORK: bandwidth buffer fq qdisc rps-rfs mss route-iw' 'SYSTEM: thp vm nofile swap' 'KERNEL: install update uninstall fallback status' 'SAFETY: baseline ownership transaction drift rollback verify recover'; }
 case ${1:-status} in
   status) status_ui;; status-detail) detail_ui;;
   one-click) shift; one_click "$@";; install) shift; orchestration_install "$@";; optimize) shift; orchestration_optimize "$@";; apply) shift; orchestration_apply "$@";;

@@ -9,7 +9,7 @@ run() { "$CLI" dry-run --fixture "$FIX/$1" --profile "${2:-auto}" --bandwidth "$
 
 "$CLI" validate-data >/dev/null
 [[ $(awk 'NR>1 {n++} END{print n+0}' "$ROOT/data/original-sysctl.tsv") -eq 31 ]]
-[[ $(awk 'NR>1 {n++} END{print n+0}' "$ROOT/metadata/profile-metadata.tsv") -eq 8 ]]
+[[ $(awk 'NR>1 {n++} END{print n+0}' "$ROOT/metadata/profile-metadata.tsv") -eq 9 ]]
 [[ $(awk 'NR>1 {n++} END{print n+0}' "$ROOT/metadata/source-map.tsv") -ge 23 ]]
 o=$(run debian12-kvm-1c953m-pfifo asia-original 1000)
 expect "$o" 'buffer_original_mb=16'; expect "$o" 'memory_mode=512M_TO_LT_1G'; expect "$o" 'rps_rfs_policy=SKIP'; expect "$o" 'system_mutation=NO'

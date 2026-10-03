@@ -171,9 +171,9 @@ tuning_choose_region() {
     local requested=${TUNING_REQUESTED_REGION:-} choice
     if [[ -z $requested ]]; then
         if tuning_is_interactive; then
-            printf '\n请选择主要网络类型：\n1. 亚太 / 低延迟连接为主\n2. 欧美 / 跨洲高延迟连接为主\n3. 全球混合 / 代理节点（推荐）\n' >&2
+            printf '\n请选择主要网络类型：\n1. 亚太 / 低延迟连接为主\n2. 欧美 / 跨洲高延迟连接为主\n3. 全球混合 / 代理节点（推荐）\n4. 使用系统默认 TCP Buffer（高并发 / 小内存更稳妥）\n' >&2
             read -r -p '请输入选择 [3]: ' choice || choice=3
-            case ${choice:-3} in 1) requested=asia;; 2) requested=overseas;; *) requested=global;; esac
+            case ${choice:-3} in 1) requested=asia;; 2) requested=overseas;; 4) requested=system;; *) requested=global;; esac
         else
             requested=asia
         fi
@@ -182,6 +182,7 @@ tuning_choose_region() {
         asia|apac) TUNING_REGION=asia; TUNING_PROFILE=ASIA_ORIGINAL;;
         overseas|us|eu|europe) TUNING_REGION=overseas; TUNING_PROFILE=OVERSEAS_ORIGINAL;;
         global|mixed|proxy|global_mixed) TUNING_REGION=global; TUNING_PROFILE=GLOBAL_MIXED;;
+        system|system-default|system_default) TUNING_REGION=system; TUNING_PROFILE=SYSTEM_DEFAULT;;
         *) return 1;;
     esac
 }
@@ -220,6 +221,10 @@ tuning_buffer_value() {
 
 tuning_choose_buffer() {
     local answer
+    if [[ $TUNING_REGION == system ]]; then
+        TUNING_BUFFER=N/A TUNING_BUFFER_SOURCE=PROJECT_UNMANAGED
+        return
+    fi
     TUNING_BUFFER=$(tuning_buffer_value "$TUNING_BANDWIDTH" "$TUNING_REGION")
     if [[ ${TUNING_BUFFER_ACCEPT:-ask} == no ]]; then
         [[ $TUNING_REGION == overseas || $TUNING_REGION == global ]] && TUNING_BUFFER=32 || TUNING_BUFFER=16
@@ -241,7 +246,7 @@ tuning_low_memory_global_guard() {
     [[ ${TUNING_REGION:-} == global ]] || return 0
     memory=${BBRV3_MEMORY_MB:-$(awk '/^MemTotal:/{printf "%d",$2/1024}' /proc/meminfo)}
     (( memory < 2048 )) || return 0
-    printf '\n检测到当前内存低于 2 GiB。\n\n全球混合 / 代理节点模式会允许 TCP socket buffer\n在高带宽、高 RTT 活跃连接下增长到较高上限。\n\n注意：\n%s MiB 是单个 TCP socket 允许动态增长的上限，\n不是每个连接启动时立即占用 %s MiB。\n\n对于大量高吞吐并发连接，\n低内存 VPS 可能出现更高的内存压力。\n\n当前内存：%s MiB\n推荐 Buffer：%s MiB\n' "$TUNING_BUFFER" "$TUNING_BUFFER" "$memory" "$TUNING_BUFFER" >&2
+    printf '\n检测到当前内存低于 2 GiB。\n\n全球混合 / 代理节点模式会允许 TCP socket buffer\n在高带宽、高 RTT 活跃连接下增长到较高上限。\n\n注意：\n%s MiB 是单个 TCP socket 允许动态增长的上限，\n不是每个连接启动时立即占用 %s MiB。\n\n对于大量高吞吐并发连接，\n低内存 VPS 可能出现更高的内存压力。\n也可以返回选择 4. 使用系统默认 TCP Buffer。\n\n当前内存：%s MiB\n推荐 Buffer：%s MiB\n' "$TUNING_BUFFER" "$TUNING_BUFFER" "$memory" "$TUNING_BUFFER" >&2
     if ! tuning_is_interactive; then
         [[ ${TUNING_ACCEPT_LOW_MEMORY_GLOBAL:-NO} == YES ]] && return 0
         printf 'GLOBAL_LOW_MEMORY_CONFIRMATION_REQUIRED\n请显式使用 --accept-low-memory-global 授权，或选择 Asia / Overseas。\n' >&2

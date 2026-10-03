@@ -3,6 +3,10 @@ source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 policy_buffer() {
     local profile=$1 bw=$2 ram=$3 region=asia buffer=0
+    if [[ $profile == SYSTEM_DEFAULT ]]; then
+      policy_kv buffer_original_mb N/A; policy_kv buffer_guard NONE; policy_kv buffer_effective_mb N/A; policy_kv buffer_source project_unmanaged
+      return
+    fi
     [[ $profile == OVERSEAS_ORIGINAL ]] && region=overseas
     [[ $profile == GLOBAL_MIXED ]] && region=global
     if ! [[ $bw =~ ^[0-9]+$ ]] || (( bw <= 0 )); then

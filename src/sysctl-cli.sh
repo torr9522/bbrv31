@@ -5,6 +5,7 @@ source "$ROOT/src/core/paths.sh"
 source "$ROOT/src/core/transaction.sh"
 source "$ROOT/src/apply/sysctl.sh"
 source "$ROOT/src/recovery/rollback.sh"
+source "$ROOT/src/recovery/buffer-baseline.sh"
 
 require_root() { [[ $EUID -eq 0 || ${BBRV3_MOCK:-0} == 1 || $BBRV3_SYSCTL_ROOT != / ]] || { printf 'ROOT_REQUIRED\n' >&2; return 1; }; }
 parse_args() {
@@ -37,12 +38,31 @@ plan_command() {
 }
 apply_command() {
     require_root; with_lock
-    local dir latest state; latest=$(latest_transaction || true)
+    local dir latest state profile operation restore= baseline_rc=0; latest=$(latest_transaction || true)
     if [[ -n $latest && -f $latest/state ]]; then state=$(<"$latest/state"); [[ $state != APPLYING && $state != ROLLING_BACK ]] || { printf 'UNFINISHED_TRANSACTION=%s\n' "$latest" >&2; return 3; }; fi
+    case ${REQUESTED_PROFILE,,} in
+        system|system-default|system_default)
+            ensure_buffer_baseline || return 3
+            ;;
+        *)
+            ensure_buffer_baseline allow-managed-missing || baseline_rc=$?
+            (( baseline_rc == 0 || baseline_rc == 2 )) || return 3
+            ;;
+    esac
     dir=$(new_transaction); make_plan "$dir"
+    cp "$dir/desired.tsv" "$dir/desired-persistent.tsv"
+    profile=$(awk -F= '$1=="profile"{print $2}' "$dir/desired.tsv.meta")
     if ! scan_conflicts "$dir/desired.tsv" "$dir/conflicts.tsv"; then printf BLOCKING_CONFLICT >"$dir/state"; printf 'BLOCKING_CONFLICT\n' >&2; return 3; fi
-    if [[ $(owned_file_status) == OWNED ]] && verify_plan "$dir/desired.tsv" "$dir/verify.tsv"; then printf 'NOOP already verified\n'; printf NOOP >"$dir/state"; return 0; fi
-    if apply_transaction "$dir" "$dir/desired.tsv"; then return 0; fi
+    if [[ $profile == SYSTEM_DEFAULT && $(owned_file_status) == OWNED ]] && ! owned_manages_buffer && verify_plan "$dir/desired.tsv" "$dir/verify.tsv"; then printf 'NOOP already verified\n'; printf NOOP >"$dir/state"; return 0; fi
+    if [[ $profile != SYSTEM_DEFAULT && $(owned_file_status) == OWNED ]] && verify_plan "$dir/desired.tsv" "$dir/verify.tsv"; then printf 'NOOP already verified\n'; printf NOOP >"$dir/state"; return 0; fi
+    operation="$dir/operation.tsv"; cp "$dir/desired.tsv" "$operation"; cp "$dir/desired.tsv.meta" "$operation.meta"
+    if [[ $profile == SYSTEM_DEFAULT ]] && owned_manages_buffer; then
+        restore="$dir/restore.tsv"; printf 'key\tvalue\tcategory\tsource_function\tsource_line_start\tsource_line_end\n' >"$restore"
+        append_buffer_restore_plan "$restore"
+        tail -n +2 "$restore" >>"$operation"
+        cp "$operation" "$dir/desired.tsv"; cp "$operation.meta" "$dir/desired.tsv.meta"
+    fi
+    if apply_transaction "$dir" "$operation" "$dir/desired-persistent.tsv" "$restore"; then return 0; fi
     printf ROLLING_BACK >"$dir/state"; rollback_transaction "$dir" || true; return 4
 }
 find_transaction() {

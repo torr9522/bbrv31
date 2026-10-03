@@ -82,12 +82,36 @@ kernel_noop_summary() {
 }
 cli_mock_dispatch() { [[ ${BBRV3_CLI_MOCK:-NO} == YES ]] || return 1; printf 'dispatch=%s\n' "$1"; }
 
+orchestration_rollback_transactions() {
+    local sysctl_tx=$1 network_tx=${2:-} rc=0
+    [[ -z $network_tx ]] || "$ROOT/bbrv3-universal.sh" rollback-network --transaction "$network_tx" >/dev/null || rc=1
+    [[ -z $sysctl_tx ]] || "$ROOT/bbrv3-universal.sh" rollback-sysctl --transaction "$sysctl_tx" >/dev/null || rc=1
+    (( rc == 0 )) || printf 'ORCHESTRATION_ROLLBACK_FAILED\n' >&2
+    return "$rc"
+}
+
 orchestration_apply_policy() {
-    local profile=$1 bandwidth=$2 buffer=$3 create_swap=$4 swap_size=$5
-    "$ROOT/bbrv3-universal.sh" apply-sysctl --profile "$profile" --bandwidth "$bandwidth" --buffer-mib "$buffer"
-    "$ROOT/bbrv3-universal.sh" apply-network
-    if [[ $create_swap == YES ]]; then "$ROOT/bbrv3-universal.sh" apply-resources --create-swap --swap-size "$swap_size"
-    else "$ROOT/bbrv3-universal.sh" apply-resources; fi
+    local profile=$1 bandwidth=$2 buffer=$3 create_swap=$4 swap_size=$5 sysctl_out network_out sysctl_tx= network_tx=
+    if [[ $profile == SYSTEM_DEFAULT ]]; then
+        sysctl_out=$("$ROOT/bbrv3-universal.sh" apply-sysctl --profile "$profile" --bandwidth "$bandwidth") || { printf '%s\n' "$sysctl_out"; return 1; }
+    else
+        sysctl_out=$("$ROOT/bbrv3-universal.sh" apply-sysctl --profile "$profile" --bandwidth "$bandwidth" --buffer-mib "$buffer") || { printf '%s\n' "$sysctl_out"; return 1; }
+    fi
+    printf '%s\n' "$sysctl_out"; sysctl_tx=$(sed -n 's/.*transaction=//p' <<<"$sysctl_out" | tail -1)
+    network_out=$("$ROOT/bbrv3-universal.sh" apply-network) || {
+        printf '%s\n' "$network_out"
+        orchestration_rollback_transactions "$sysctl_tx" || true
+        return 1
+    }
+    printf '%s\n' "$network_out"; network_tx=$(sed -n 's/.*transaction=//p' <<<"$network_out" | tail -1)
+    if [[ $create_swap == YES ]]; then "$ROOT/bbrv3-universal.sh" apply-resources --create-swap --swap-size "$swap_size" || {
+        orchestration_rollback_transactions "$sysctl_tx" "$network_tx" || true
+        return 1
+    }
+    else "$ROOT/bbrv3-universal.sh" apply-resources || {
+        orchestration_rollback_transactions "$sysctl_tx" "$network_tx" || true
+        return 1
+    }; fi
     enable_reconcile
     install -d -m 700 "$(state_root)/optimization"
     cat >"$(state_root)/optimization/state.env" <<EOF
@@ -169,6 +193,7 @@ optimization_network_type_label() {
         asia) printf '亚太 / 低延迟连接为主';;
         overseas) printf '欧美 / 跨洲高延迟连接为主';;
         global) printf '全球混合 / 代理节点';;
+        system) printf '使用系统默认 TCP Buffer';;
         *) printf unknown;;
     esac
 }
@@ -179,11 +204,15 @@ optimization_summary() {
     printf 'Kernel：%s\n拥塞算法：%s\n队列算法：%s\n\n网络类型：%s\n' "$(uname -r)" "$(sysctl -n net.ipv4.tcp_congestion_control)" "$qdisc" "$(optimization_network_type_label)"
     if [[ $TUNING_REGION == global ]]; then
         printf 'Download：%s Mbps\nUpload：%s Mbps\n有效带宽：%s Mbps\n' "${TUNING_DOWNLOAD_MBPS:-N/A}" "${TUNING_UPLOAD_MBPS:-N/A}" "$TUNING_EFFECTIVE_MBPS"
-    else
+    elif [[ $TUNING_REGION != system ]]; then
         printf '测速带宽：%s Mbps\n' "$TUNING_BANDWIDTH"
     fi
-    printf 'TCP Buffer：%s MiB\n\n' "$TUNING_BUFFER"
-    printf '[PASS] 31项系统参数\n[PASS] FQ\n[PASS/SKIP] RPS/RFS 策略\n[PASS/SKIP] MSS 策略\n[PASS] Route IW\n[PASS] THP\n[PASS] nofile\n[PASS] Swap 策略\n[PASS] 持久化\n\n优化完成。\n============================================================\n'
+    if [[ $TUNING_REGION == system ]]; then
+        printf 'TCP Buffer：系统 / Provider 管理\n\n[PASS] 27项通用系统参数\n[SKIP] 4项 TCP Buffer 参数（系统默认）\n'
+    else
+        printf 'TCP Buffer：%s MiB\n\n[PASS] 31项系统参数\n' "$TUNING_BUFFER"
+    fi
+    printf '[PASS] FQ\n[PASS/SKIP] RPS/RFS 策略\n[PASS/SKIP] MSS 策略\n[PASS] Route IW\n[PASS] THP\n[PASS] nofile\n[PASS] Swap 策略\n[PASS] 持久化\n\n优化完成。\n============================================================\n'
 }
 orchestration_optimize() {
     cli_mock_dispatch optimize || {
@@ -194,6 +223,8 @@ orchestration_optimize() {
         tuning_collect_inputs || return $?
         if [[ $TUNING_REGION == global ]]; then
             printf '\n测速结果：\nDownload：%s Mbps\nUpload：%s Mbps\n\n网络类型：\n全球混合 / 代理节点\n\n有效带宽：%s Mbps\nTCP Buffer：%s MiB\n\n即将应用 BBRv3 网络优化...\n' "${TUNING_DOWNLOAD_MBPS:-N/A}" "${TUNING_UPLOAD_MBPS:-N/A}" "$TUNING_EFFECTIVE_MBPS" "$TUNING_BUFFER"
+        elif [[ $TUNING_REGION == system ]]; then
+            printf '\n已选择：\n使用系统默认 TCP Buffer\n\nBBRv3 Universal 将不会主动提高：\nnet.core.rmem_max\nnet.core.wmem_max\nnet.ipv4.tcp_rmem\nnet.ipv4.tcp_wmem\n\n其它 BBRv3 网络优化仍会正常执行。\n\n即将应用 BBRv3 网络优化...\n'
         else
             printf '\n测速带宽：%s Mbps\n网络类型：%s\nTCP Buffer：%s MiB\n即将应用 BBRv3 网络优化...\n' "$TUNING_BANDWIDTH" "$(optimization_network_type_label)" "$TUNING_BUFFER"
         fi
@@ -201,6 +232,7 @@ orchestration_optimize() {
         cat >>"$(state_root)/optimization/state.env" <<EOF
 region=$TUNING_REGION
 network_type=$TUNING_REGION
+buffer_policy=$TUNING_REGION
 bandwidth_source=$TUNING_BANDWIDTH_SOURCE
 download_mbps=${TUNING_DOWNLOAD_MBPS:-N/A}
 upload_mbps=${TUNING_UPLOAD_MBPS:-N/A}

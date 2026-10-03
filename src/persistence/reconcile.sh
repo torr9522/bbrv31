@@ -23,6 +23,15 @@ UNIT
 }
 persistence_enable_metadata() { install -d -m 700 "$BBRV3_PERSIST_ROOT"; : >"$BBRV3_PERSIST_ROOT/enabled"; }
 
+persistence_apply_sysctl() {
+    local root=$1 profile=$2 bandwidth=$3 buffer=$4 buffer_policy=$5
+    if [[ $buffer_policy == system || $profile == SYSTEM_DEFAULT ]]; then
+        "$root/bbrv3-universal.sh" apply-sysctl --profile SYSTEM_DEFAULT --bandwidth "$bandwidth"
+    else
+        "$root/bbrv3-universal.sh" apply-sysctl --profile "$profile" --bandwidth "$bandwidth" --buffer-mib "$buffer"
+    fi
+}
+
 persistence_resume_kernel() {
     local root=$1 lifecycle_root=${BBRV3_STATE_ROOT:-/var/lib/bbrv3-universal}/lifecycle d stage entry file
     . "$root/src/core/kernel.sh"; . "$root/src/core/lifecycle.sh"; . "$root/src/apply/kernel.sh"
@@ -48,7 +57,7 @@ persistence_resume_kernel() {
 }
 
 persistence_reconcile() {
-    local root=${ROOT:-${BBRV3_UNIVERSAL_ROOT:-/usr/local/lib/bbrv3-universal}} rc state profile bandwidth buffer attempt
+    local root=${ROOT:-${BBRV3_UNIVERSAL_ROOT:-/usr/local/lib/bbrv3-universal}} rc state profile bandwidth buffer buffer_policy attempt
     if [[ -f $root/src/core/kernel.sh ]]; then
         persistence_resume_kernel "$root" || {
             rc=$?
@@ -61,10 +70,10 @@ persistence_reconcile() {
         printf 'reconcile=KERNEL_ONLY\nnetwork_optimization=NOT_APPLIED\n'
         return 0
     fi
-    profile=$(awk -F= '$1=="profile"{print $2}' "$state"); bandwidth=$(awk -F= '$1=="detected_bandwidth_mbps"{print $2}' "$state"); buffer=$(awk -F= '$1=="buffer_mib"{print $2}' "$state")
+    profile=$(awk -F= '$1=="profile"{print $2}' "$state"); bandwidth=$(awk -F= '$1=="detected_bandwidth_mbps"{print $2}' "$state"); buffer=$(awk -F= '$1=="buffer_mib"{print $2}' "$state"); buffer_policy=$(awk -F= '$1=="buffer_policy"{print $2}' "$state")
     printf 'reconcile=OWNED_OPTIMIZATION\ndrift=DETECT_BEFORE_APPLY\nretry_limit=3\n'
     for attempt in 1 2 3; do
-        if "$root/bbrv3-universal.sh" apply-sysctl --profile "$profile" --bandwidth "$bandwidth" --buffer-mib "$buffer" &&
+        if persistence_apply_sysctl "$root" "$profile" "$bandwidth" "$buffer" "$buffer_policy" &&
            "$root/bbrv3-universal.sh" apply-network &&
            "$root/bbrv3-universal.sh" apply-resources; then
             printf 'reconcile_result=RECONCILED\nattempt=%s\n' "$attempt"; return 0

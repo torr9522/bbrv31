@@ -3,6 +3,7 @@ set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../core" && pwd)/paths.sh"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../recovery" && pwd)/baseline.sh"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../verify" && pwd)/sysctl.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../recovery" && pwd)/buffer-baseline.sh"
 
 sysctl_keys() { tail -n +2 "$BBRV3_PROJECT_ROOT/data/original-sysctl.tsv" | awk -F '\t' '{print $2}'; }
 plan_value() { awk -F '\t' -v k="$1" '$1==k {print $2; exit}' "$2"; }
@@ -59,7 +60,7 @@ atomic_write_owned() {
 }
 
 apply_transaction() {
-    local dir=$1 plan=$2 path; path=$(owned_path)
+    local dir=$1 plan=$2 persistent_plan=${3:-$2} restore_plan=${4:-} path; path=$(owned_path)
     [[ $(owned_file_status) != FOREIGN ]] || { printf 'FOREIGN_FILE_AT_OWNED_PATH\n' >&2; return 3; }
     printf PREPARED >"$dir/state"
     capture_baseline "$dir" "$plan"
@@ -67,13 +68,24 @@ apply_transaction() {
     local tmp="$dir/owned.new"
     {
       printf '# managed-by=bbrv3-universal\n# schema-version=%s\n# policy-version=%s\n# transaction-id=%s\n# profile=%s\n# source-baseline=6630447fa25c42f4050c5745540cab2eef15f9e8f6dca201288bf98d4b602993\n' "$SCHEMA_VERSION" "$POLICY_VERSION" "$(basename "$dir")" "$(awk -F= '$1=="profile"{print $2; exit}' "${plan}.meta")"
-      tail -n +2 "$plan" | awk -F '\t' '{print $1"="$2}'
+      tail -n +2 "$persistent_plan" | awk -F '\t' '{print $1"="$2}'
     } >"$tmp"
     atomic_write_owned "$tmp"; hash_file "$path" >"$dir/applied.sha256"
     if ! "$BBRV3_SYSCTL_BIN" -p "$path" >"$dir/apply.out" 2>"$dir/apply.err"; then
         printf APPLY_FAILED >"$dir/state"; return 4
     fi
+    if [[ -n $restore_plan && -s $restore_plan ]]; then
+        while IFS=$'\t' read -r key value category source start end; do
+            [[ $key == key || -z $key ]] && continue
+            if ! sysctl_write "$key" "$value" >>"$dir/apply.out" 2>>"$dir/apply.err"; then
+                printf APPLY_FAILED >"$dir/state"; return 4
+            fi
+        done <"$restore_plan"
+    fi
     if ! verify_plan "$plan" "$dir/verify.tsv"; then printf VERIFY_FAILED >"$dir/state"; return 5; fi
+    if awk -F= '/^(net\.core\.(rmem_max|wmem_max)|net\.ipv4\.tcp_(rmem|wmem))=/{found=1} END{exit !found}' "$path"; then
+        [[ $(awk -F= '$1=="profile"{print $2}' "${plan}.meta" 2>/dev/null || true) != SYSTEM_DEFAULT ]] || { printf VERIFY_FAILED >"$dir/state"; return 5; }
+    fi
     printf VERIFIED >"$dir/state"
     printf 'PASS apply transaction=%s\n' "$(basename "$dir")"
 }
