@@ -13,11 +13,11 @@ fetch_payload() {
     local tmp=$1 archive="$tmp/$ARCHIVE_NAME" checksum="$tmp/$ARCHIVE_NAME.sha256" package="$tmp/$KERNEL_PACKAGE_NAME" package_checksum="$tmp/$KERNEL_PACKAGE_NAME.sha256"
     command -v curl >/dev/null || die 'curl is required'
     command -v zstd >/dev/null || die 'zstd is required'
-    curl -fsSL --retry 3 "$BASE_URL/$ARCHIVE_NAME" -o "$archive"
-    curl -fsSL --retry 3 "$BASE_URL/$ARCHIVE_NAME.sha256" -o "$checksum"
+    curl -fsSL --retry 3 "$BASE_URL/$ARCHIVE_NAME" -o "$archive" || die 'source archive download failed'
+    curl -fsSL --retry 3 "$BASE_URL/$ARCHIVE_NAME.sha256" -o "$checksum" || die 'source checksum download failed'
     [[ $(sha256sum "$archive" | awk '{print $1}') == $(awk 'NF {print $1; exit}' "$checksum") ]] || die 'source archive checksum mismatch'
-    zstd -t "$archive" >/dev/null
-    tar -xf "$archive" -C "$tmp"
+    zstd -tq "$archive" 2>/dev/null || die 'source archive decompression check failed'
+    tar -xf "$archive" -C "$tmp" || die 'source archive extraction failed'
     local payload="$tmp/bbrv3-universal-${VERSION_TARGET}"
     [[ -x $payload/bbrv3-universal.sh ]] || die 'payload entrypoint missing'
     if curl -fsSL --retry 3 "$BASE_URL/$KERNEL_PACKAGE_NAME" -o "$package" && curl -fsSL --retry 3 "$BASE_URL/$KERNEL_PACKAGE_NAME.sha256" -o "$package_checksum"; then
