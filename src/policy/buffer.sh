@@ -4,8 +4,9 @@ source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 policy_buffer() {
     local profile=$1 bw=$2 ram=$3 region=asia buffer=0
     [[ $profile == OVERSEAS_ORIGINAL ]] && region=overseas
+    [[ $profile == GLOBAL_MIXED ]] && region=global
     if ! [[ $bw =~ ^[0-9]+$ ]] || (( bw <= 0 )); then
-      [[ $region == overseas ]] && buffer=64 || buffer=16
+      [[ $region == overseas || $region == global ]] && buffer=64 || buffer=16
       policy_kv buffer_original_mb "$buffer"; policy_kv buffer_guard NONE; policy_kv buffer_effective_mb "$buffer"; policy_kv buffer_source original_invalid_fallback
       return
     fi

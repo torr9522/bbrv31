@@ -56,4 +56,15 @@ $CLI rollback-sysctl >/tmp/phase3-rollback.out
 grep -q 'PASS rollback' /tmp/phase3-rollback.out
 [[ ! -e $owned ]]
 [[ $(awk -F= '$1=="net.core.default_qdisc"{print $2}' "$VALUES") == pfifo_fast ]]
+
+global_apply=$($CLI apply-sysctl --profile GLOBAL_MIXED --bandwidth 7000 --buffer-mib 64 --ram-mb 4096)
+grep -q 'PASS apply' <<<"$global_apply"
+grep -q '^# profile=GLOBAL_MIXED$' "$owned"
+[[ $(awk -F= '$1=="net.core.rmem_max"{print $2}' "$VALUES") == 67108864 ]]
+global_verify=$($CLI verify-sysctl --profile GLOBAL_MIXED --bandwidth 7000 --buffer-mib 64 --ram-mb 4096)
+[[ $(awk -F '\t' 'NR>1 && $4=="MATCH"{n++} END{print n+0}' <<<"$global_verify") == 31 ]]
+$CLI rollback-sysctl >/tmp/v0110-global-rollback.out
+grep -q 'PASS rollback' /tmp/v0110-global-rollback.out
+[[ ! -e $owned ]]
+[[ $(awk -F= '$1=="net.core.rmem_max"{print $2}' "$VALUES") == 212992 ]]
 printf 'PASS mock apply/verify/idempotency/drift/rollback\n'

@@ -28,12 +28,25 @@ tuning_install_speedtest() {
     TUNING_SPEEDTEST_BIN=/usr/local/bin/speedtest
 }
 
-tuning_parse_upload() {
-    sed -nE 's/.*[Uu]pload:[[:space:]]*([0-9]+([.][0-9]+)?).*/\1/p' | head -1
+tuning_parse_speed() {
+    local metric=$1
+    sed -nE "s/.*${metric}:[[:space:]]*([0-9]+([.][0-9]+)?).*/\\1/Ip" | head -1
+}
+
+tuning_normalize_mbps() {
+    local value=${1:-}
+    [[ $value =~ ^[0-9]+([.][0-9]+)?$ ]] || return 1
+    value=${value%%.*}
+    (( value > 0 )) || return 1
+    printf '%s\n' "$value"
+}
+
+tuning_valid_mbps() {
+    [[ ${1:-} =~ ^[0-9]+$ ]] && (( $1 > 0 ))
 }
 
 tuning_run_speedtest() {
-    local server=${1:-} output upload started ended rc=0
+    local server=${1:-} output download upload started ended rc=0
     started=$(date +%s)
     if [[ -n $server ]]; then
         output=$($TUNING_SPEEDTEST_BIN --accept-license --accept-gdpr --server-id="$server" 2>&1) || rc=$?
@@ -43,28 +56,48 @@ tuning_run_speedtest() {
     ended=$(date +%s)
     printf '%s\n' "$output" >&2
     TUNING_SPEEDTEST_DURATION=$((ended - started))
-    upload=$(tuning_parse_upload <<<"$output")
-    [[ $rc -eq 0 && -n $upload && $output != *FAILED* && $output != *Error* && $output != *error* ]] || return 1
-    upload=${upload%.*}
-    [[ $upload =~ ^[0-9]+$ && $upload -gt 0 ]] || return 1
-    TUNING_BANDWIDTH=$upload
+    TUNING_DOWNLOAD_MBPS=N/A TUNING_UPLOAD_MBPS=N/A
+    (( rc == 0 )) && [[ $output != *FAILED* && $output != *Error* && $output != *error* ]] || return 1
+    download=$(tuning_parse_speed Download <<<"$output")
+    upload=$(tuning_parse_speed Upload <<<"$output")
+    download=$(tuning_normalize_mbps "$download" 2>/dev/null || true)
+    upload=$(tuning_normalize_mbps "$upload" 2>/dev/null || true)
+    [[ -n $download ]] && TUNING_DOWNLOAD_MBPS=$download
+    if [[ -n $upload ]]; then
+        TUNING_UPLOAD_MBPS=$upload
+        TUNING_BANDWIDTH=$upload
+        return 0
+    fi
+    [[ -n $download ]] && return 2
+    return 1
 }
 
 tuning_auto_speedtest() {
-    local servers server attempts=0
+    local servers server attempts=0 rc partial_download=N/A partial_server=
     servers=$($TUNING_SPEEDTEST_BIN --accept-license --accept-gdpr --servers 2>/dev/null |
         sed -nE 's/^[[:space:]]*([0-9]+).*/\1/p' | head -n 10 || true)
     if [[ -z $servers ]]; then
-        tuning_run_speedtest
-        return
+        rc=0; tuning_run_speedtest || rc=$?
+        TUNING_SPEEDTEST_SERVER=AUTO
+        return "$rc"
     fi
     while read -r server; do
         [[ -n $server ]] || continue
         attempts=$((attempts + 1))
         printf '正在测试 Speedtest 服务器 #%s（尝试 %s/5）...\n' "$server" "$attempts" >&2
-        tuning_run_speedtest "$server" && return 0
+        rc=0; tuning_run_speedtest "$server" || rc=$?
+        if (( rc == 0 )); then TUNING_SPEEDTEST_SERVER=$server; return 0; fi
+        if (( rc == 2 )) && tuning_valid_mbps "$TUNING_DOWNLOAD_MBPS"; then
+            if ! tuning_valid_mbps "$partial_download" || (( TUNING_DOWNLOAD_MBPS > partial_download )); then
+                partial_download=$TUNING_DOWNLOAD_MBPS; partial_server=$server
+            fi
+        fi
         (( attempts >= 5 )) && break
     done <<<"$servers"
+    if tuning_valid_mbps "$partial_download"; then
+        TUNING_DOWNLOAD_MBPS=$partial_download TUNING_UPLOAD_MBPS=N/A TUNING_SPEEDTEST_SERVER=$partial_server
+        return 2
+    fi
     return 1
 }
 
@@ -79,20 +112,21 @@ tuning_read_positive() {
 
 tuning_fallback_bandwidth() {
     local answer value
-    if ! tuning_is_interactive; then TUNING_BANDWIDTH=1000; TUNING_BANDWIDTH_SOURCE=FALLBACK_1000; return 0; fi
+    if ! tuning_is_interactive; then TUNING_BANDWIDTH=1000; TUNING_EFFECTIVE_MBPS=1000; TUNING_BANDWIDTH_SOURCE=FALLBACK_1000; return 0; fi
     printf '测速失败。可以使用默认值 1000 Mbps，或手工输入上传带宽。\n' >&2
     read -r -p '使用默认值 1000 Mbps？(Y/N) [Y]: ' answer || answer=Y
     answer=${answer:-Y}
     if [[ $answer =~ ^[Yy]$ ]]; then
-        TUNING_BANDWIDTH=1000; TUNING_BANDWIDTH_SOURCE=FALLBACK_1000
+        TUNING_BANDWIDTH=1000; TUNING_EFFECTIVE_MBPS=1000; TUNING_BANDWIDTH_SOURCE=FALLBACK_1000
     else
         value=$(tuning_read_positive '请输入上传带宽（Mbps）: ')
-        TUNING_BANDWIDTH=$value; TUNING_BANDWIDTH_SOURCE=MANUAL_AFTER_FAILURE
+        TUNING_BANDWIDTH=$value; TUNING_EFFECTIVE_MBPS=$value; TUNING_BANDWIDTH_SOURCE=MANUAL_AFTER_FAILURE
     fi
 }
 
 tuning_choose_bandwidth() {
-    local mode=${TUNING_BANDWIDTH_MODE:-} server=${TUNING_SERVER_ID:-} value=${TUNING_REQUESTED_BANDWIDTH:-} choice preset
+    local mode=${TUNING_BANDWIDTH_MODE:-} server=${TUNING_SERVER_ID:-} value=${TUNING_REQUESTED_BANDWIDTH:-} choice preset rc
+    TUNING_DOWNLOAD_MBPS=N/A TUNING_UPLOAD_MBPS=N/A TUNING_EFFECTIVE_MBPS= TUNING_SPEEDTEST_SERVER=
     if [[ -z $mode ]]; then
         if tuning_is_interactive; then
             printf '\n=== 服务器带宽检测 ===\n1. 自动测速（推荐）\n2. 指定 Speedtest Server ID\n3. 手工选择/输入带宽\n' >&2
@@ -104,15 +138,16 @@ tuning_choose_bandwidth() {
     fi
     case $mode in
         auto)
-            tuning_install_speedtest && tuning_auto_speedtest && TUNING_BANDWIDTH_SOURCE=AUTO_SPEEDTEST || tuning_fallback_bandwidth
+            rc=1
+            if tuning_install_speedtest; then rc=0; tuning_auto_speedtest || rc=$?; fi
+            if (( rc == 0 || rc == 2 )); then TUNING_BANDWIDTH_SOURCE=AUTO_SPEEDTEST; else tuning_fallback_bandwidth; fi
             ;;
         server)
             [[ -n $server ]] || server=$(tuning_read_positive '请输入 Speedtest Server ID: ')
-            if tuning_install_speedtest && tuning_run_speedtest "$server"; then
-                TUNING_BANDWIDTH_SOURCE=SERVER_SPEEDTEST; TUNING_SPEEDTEST_SERVER=$server
-            else
-                tuning_fallback_bandwidth
-            fi
+            rc=1
+            if tuning_install_speedtest; then rc=0; tuning_run_speedtest "$server" || rc=$?; fi
+            if (( rc == 0 || rc == 2 )); then TUNING_BANDWIDTH_SOURCE=SERVER_SPEEDTEST; TUNING_SPEEDTEST_SERVER=$server
+            else tuning_fallback_bandwidth; fi
             ;;
         manual)
             if [[ -z $value ]]; then
@@ -126,7 +161,7 @@ tuning_choose_bandwidth() {
                 esac
             fi
             [[ $value =~ ^[0-9]+$ && $value -gt 0 ]] || return 1
-            TUNING_BANDWIDTH=$value; TUNING_BANDWIDTH_SOURCE=MANUAL_VALUE; TUNING_SPEEDTEST_DURATION=0
+            TUNING_BANDWIDTH=$value; TUNING_EFFECTIVE_MBPS=$value; TUNING_BANDWIDTH_SOURCE=MANUAL_VALUE; TUNING_SPEEDTEST_DURATION=0
             ;;
         *) return 1 ;;
     esac
@@ -136,20 +171,47 @@ tuning_choose_region() {
     local requested=${TUNING_REQUESTED_REGION:-} choice
     if [[ -z $requested ]]; then
         if tuning_is_interactive; then
-            printf '\n请选择主要线路地区：\n1. 亚太\n2. 美国 / 欧洲\n' >&2
-            read -r -p '请输入选择 [1]: ' choice || choice=1
-            [[ ${choice:-1} == 2 ]] && requested=overseas || requested=asia
+            printf '\n请选择主要网络类型：\n1. 亚太 / 低延迟连接为主\n2. 欧美 / 跨洲高延迟连接为主\n3. 全球混合 / 代理节点（推荐）\n' >&2
+            read -r -p '请输入选择 [3]: ' choice || choice=3
+            case ${choice:-3} in 1) requested=asia;; 2) requested=overseas;; *) requested=global;; esac
         else
             requested=asia
         fi
     fi
-    case ${requested,,} in asia|apac) TUNING_REGION=asia; TUNING_PROFILE=ASIA_ORIGINAL;; overseas|us|eu|europe) TUNING_REGION=overseas; TUNING_PROFILE=OVERSEAS_ORIGINAL;; *) return 1;; esac
+    case ${requested,,} in
+        asia|apac) TUNING_REGION=asia; TUNING_PROFILE=ASIA_ORIGINAL;;
+        overseas|us|eu|europe) TUNING_REGION=overseas; TUNING_PROFILE=OVERSEAS_ORIGINAL;;
+        global|mixed|proxy|global_mixed) TUNING_REGION=global; TUNING_PROFILE=GLOBAL_MIXED;;
+        *) return 1;;
+    esac
+}
+
+tuning_finalize_bandwidth() {
+    local download=${TUNING_DOWNLOAD_MBPS:-N/A} upload=${TUNING_UPLOAD_MBPS:-N/A}
+    if [[ ${TUNING_BANDWIDTH_SOURCE:-} == MANUAL_VALUE || ${TUNING_BANDWIDTH_SOURCE:-} == MANUAL_AFTER_FAILURE || ${TUNING_BANDWIDTH_SOURCE:-} == FALLBACK_1000 ]]; then
+        tuning_valid_mbps "${TUNING_BANDWIDTH:-}" || return 1
+        TUNING_EFFECTIVE_MBPS=$TUNING_BANDWIDTH
+        return 0
+    fi
+    if [[ $TUNING_REGION == global ]]; then
+        if tuning_valid_mbps "$download" && tuning_valid_mbps "$upload"; then
+            (( download > upload )) && TUNING_EFFECTIVE_MBPS=$download || TUNING_EFFECTIVE_MBPS=$upload
+        elif tuning_valid_mbps "$download"; then TUNING_EFFECTIVE_MBPS=$download
+        elif tuning_valid_mbps "$upload"; then TUNING_EFFECTIVE_MBPS=$upload
+        else tuning_fallback_bandwidth; return
+        fi
+    else
+        if tuning_valid_mbps "$upload"; then TUNING_EFFECTIVE_MBPS=$upload
+        else tuning_fallback_bandwidth; return
+        fi
+    fi
+    TUNING_BANDWIDTH=$TUNING_EFFECTIVE_MBPS
 }
 
 tuning_buffer_value() {
     local bw=$1 region=$2
-    if ! [[ $bw =~ ^[0-9]+$ ]] || (( bw <= 0 )); then [[ $region == overseas ]] && printf 64 || printf 16; return; fi
-    if [[ $region == overseas ]]; then
+    if ! [[ $bw =~ ^[0-9]+$ ]] || (( bw <= 0 )); then [[ $region == overseas || $region == global ]] && printf 64 || printf 16; return; fi
+    if [[ $region == overseas || $region == global ]]; then
         case $bw in 100) printf 8;; 200) printf 16;; 300) printf 20;; 500) printf 32;; 700) printf 48;; 1000|1500|2000|2500) printf 64;; *) if ((bw<500)); then printf 16; elif ((bw<1000)); then printf 48; else printf 64; fi;; esac
     else
         case $bw in 100) printf 6;; 200) printf 8;; 300) printf 10;; 500) printf 12;; 700) printf 14;; 1000) printf 16;; 1500) printf 20;; 2000) printf 24;; 2500) printf 28;; *) if ((bw<500)); then printf 8; elif ((bw<1000)); then printf 12; elif ((bw<2000)); then printf 16; elif ((bw<5000)); then printf 24; elif ((bw<10000)); then printf 28; else printf 32; fi;; esac
@@ -160,18 +222,33 @@ tuning_choose_buffer() {
     local answer
     TUNING_BUFFER=$(tuning_buffer_value "$TUNING_BANDWIDTH" "$TUNING_REGION")
     if [[ ${TUNING_BUFFER_ACCEPT:-ask} == no ]]; then
-        [[ $TUNING_REGION == overseas ]] && TUNING_BUFFER=32 || TUNING_BUFFER=16
+        [[ $TUNING_REGION == overseas || $TUNING_REGION == global ]] && TUNING_BUFFER=32 || TUNING_BUFFER=16
         TUNING_BUFFER_SOURCE=REJECT_FALLBACK
         return
     elif tuning_is_interactive && [[ ${TUNING_BUFFER_ACCEPT:-ask} == ask ]]; then
         read -r -p "使用推荐 TCP Buffer ${TUNING_BUFFER} MiB？(Y/N) [Y]: " answer || answer=Y
         if [[ ! ${answer:-Y} =~ ^[Yy]$ ]]; then
-            [[ $TUNING_REGION == overseas ]] && TUNING_BUFFER=32 || TUNING_BUFFER=16
+            [[ $TUNING_REGION == overseas || $TUNING_REGION == global ]] && TUNING_BUFFER=32 || TUNING_BUFFER=16
             TUNING_BUFFER_SOURCE=REJECT_FALLBACK
             return
         fi
     fi
     TUNING_BUFFER_SOURCE=ORIGINAL_TABLE
+}
+
+tuning_low_memory_global_guard() {
+    local memory answer
+    [[ ${TUNING_REGION:-} == global ]] || return 0
+    memory=${BBRV3_MEMORY_MB:-$(awk '/^MemTotal:/{printf "%d",$2/1024}' /proc/meminfo)}
+    (( memory < 2048 )) || return 0
+    printf '\n检测到当前内存低于 2 GiB。\n\n全球混合 / 代理节点模式会允许 TCP socket buffer\n在高带宽、高 RTT 活跃连接下增长到较高上限。\n\n注意：\n%s MiB 是单个 TCP socket 允许动态增长的上限，\n不是每个连接启动时立即占用 %s MiB。\n\n对于大量高吞吐并发连接，\n低内存 VPS 可能出现更高的内存压力。\n\n当前内存：%s MiB\n推荐 Buffer：%s MiB\n' "$TUNING_BUFFER" "$TUNING_BUFFER" "$memory" "$TUNING_BUFFER" >&2
+    if ! tuning_is_interactive; then
+        [[ ${TUNING_ACCEPT_LOW_MEMORY_GLOBAL:-NO} == YES ]] && return 0
+        printf 'GLOBAL_LOW_MEMORY_CONFIRMATION_REQUIRED\n请显式使用 --accept-low-memory-global 授权，或选择 Asia / Overseas。\n' >&2
+        return 3
+    fi
+    read -r -p '是否继续使用全球混合模式？[y/N]: ' answer || answer=N
+    [[ ${answer:-N} =~ ^[Yy]$ ]]
 }
 
 tuning_choose_swap() {
@@ -200,6 +277,15 @@ tuning_collect_inputs() {
     TUNING_SPEEDTEST_DURATION=0 TUNING_SPEEDTEST_SERVER=
     tuning_choose_swap
     tuning_choose_bandwidth
-    tuning_choose_region
-    tuning_choose_buffer
+    while :; do
+        tuning_choose_region
+        tuning_finalize_bandwidth
+        tuning_choose_buffer
+        if tuning_low_memory_global_guard; then break; fi
+        if ! tuning_is_interactive || [[ -n ${TUNING_REQUESTED_REGION:-} ]]; then
+            printf 'optimize=BLOCKED\nreason=GLOBAL_LOW_MEMORY_NOT_ACCEPTED\n' >&2
+            return 3
+        fi
+        printf '\n已取消全球混合模式，请重新选择网络类型。\n' >&2
+    done
 }

@@ -7,3 +7,9 @@ ownership.tsv	owned path status and pre-apply hash
 conflicts.tsv	all declared third-party definitions and classification
 verify.tsv	per-key desired/actual/result
 applied.sha256	hash of generated owned file
+network_type	asia overseas or global optimization semantic
+bandwidth_source	auto server manual or fallback input source
+download_mbps	valid Speedtest download result or N/A
+upload_mbps	valid Speedtest upload result or N/A
+effective_mbps	bandwidth used by the selected buffer policy
+buffer_mib	selected TCP socket buffer ceiling in MiB

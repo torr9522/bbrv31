@@ -1,0 +1,2 @@
+policy_name	network_type	bandwidth_input	buffer_curve	auto_rtt_probe	low_memory_guard
+GLOBAL_MIXED_OVERSEAS_CURVE_V1	global	max(valid_download_mbps,valid_upload_mbps)	OVERSEAS_ORIGINAL	NO	RAM_LT_2048_MIB_EXPLICIT_CONFIRMATION

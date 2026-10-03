@@ -3,7 +3,7 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")" && pwd)
 export BBRV3_UNIVERSAL_ROOT=$ROOT
 export PHASE2_READ_ONLY=1
-usage() { printf '%s\n' 'Usage:' '  bbrv3-universal.sh menu' '  bbrv3-universal.sh install|optimize|apply|status|status-detail|rollback|recover|reboot|uninstall' '  bbrv3-universal.sh one-click [--apply]' '  bbrv3-universal.sh kernel-plan|kernel-status|kernel-install|kernel-update|kernel-uninstall' '  bbrv3-universal.sh detect|dry-run|validate-data|compat-plan' '  bbrv3-universal.sh plan/apply/verify/rollback/recover-sysctl' '  bbrv3-universal.sh plan/apply/verify/rollback/recover-network' '  bbrv3-universal.sh plan/apply/verify/rollback/recover-resources' '  bbrv3-universal.sh advanced|menu99|reconcile'; }
+usage() { printf '%s\n' 'Usage:' '  bbrv3-universal.sh menu' '  bbrv3-universal.sh install|optimize|apply|status|status-detail|rollback|recover|reboot|uninstall' '  bbrv3-universal.sh optimize [--region asia|overseas|global] [--bandwidth Mbps] [--accept-low-memory-global]' '  bbrv3-universal.sh one-click [--apply]' '  bbrv3-universal.sh kernel-plan|kernel-status|kernel-install|kernel-update|kernel-uninstall' '  bbrv3-universal.sh detect|dry-run|validate-data|compat-plan' '  bbrv3-universal.sh plan/apply/verify/rollback/recover-sysctl' '  bbrv3-universal.sh plan/apply/verify/rollback/recover-network' '  bbrv3-universal.sh plan/apply/verify/rollback/recover-resources' '  bbrv3-universal.sh advanced|menu99|reconcile'; }
 fixture= profile=auto bandwidth=1000 bandwidth_source=MANUAL_PRESET ram= cpu= detail_mode=NO
 command_name=${1:-}; shift || true
 [[ $command_name == --help || $command_name == -h || -z $command_name ]] && { usage; exit 0; }

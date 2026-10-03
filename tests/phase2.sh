@@ -9,13 +9,14 @@ run() { "$CLI" dry-run --fixture "$FIX/$1" --profile "${2:-auto}" --bandwidth "$
 
 "$CLI" validate-data >/dev/null
 [[ $(awk 'NR>1 {n++} END{print n+0}' "$ROOT/data/original-sysctl.tsv") -eq 31 ]]
-[[ $(awk 'NR>1 {n++} END{print n+0}' "$ROOT/metadata/profile-metadata.tsv") -eq 7 ]]
+[[ $(awk 'NR>1 {n++} END{print n+0}' "$ROOT/metadata/profile-metadata.tsv") -eq 8 ]]
 [[ $(awk 'NR>1 {n++} END{print n+0}' "$ROOT/metadata/source-map.tsv") -ge 23 ]]
 o=$(run debian12-kvm-1c953m-pfifo asia-original 1000)
 expect "$o" 'buffer_original_mb=16'; expect "$o" 'memory_mode=512M_TO_LT_1G'; expect "$o" 'rps_rfs_policy=SKIP'; expect "$o" 'system_mutation=NO'
 o=$(run debian12-kvm-1c953m-pfifo asia-original 500); expect "$o" 'buffer_original_mb=12'
 o=$(run debian12-kvm-1c953m-pfifo overseas-original 1000); expect "$o" 'buffer_original_mb=64'
 o=$(run debian12-kvm-1c953m-pfifo overseas-original 500); expect "$o" 'buffer_original_mb=32'
+o=$(run debian12-kvm-1c953m-pfifo global 1000); expect "$o" 'profile=GLOBAL_MIXED'; expect "$o" 'buffer_original_mb=64'
 o=$(run debian12-kvm-1c953m-pfifo compat-original 1000); expect "$o" 'profile=COMPAT_ORIGINAL'; expect "$o" 'buffer_original_mb=16'
 o=$(run debian12-kvm-2c2g-mq auto 1000)
 expect "$o" 'qdisc_policy=KEEP_MQ_AND_MANAGE_LEAF'; expect "$o" 'rps_rfs_policy=DEFAULT_SKIP'

@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT=${BBRV3_UNIVERSAL_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}
 source "$ROOT/src/loader.sh"
 
-usage() { printf 'usage: %s --profile asia|overseas --bandwidth Mbps --ram-mb MB --cpu-count N\n' "$0"; }
+usage() { printf 'usage: %s --profile asia|overseas|global --bandwidth Mbps --ram-mb MB --cpu-count N\n' "$0"; }
 profile=asia bandwidth=0 ram_mb=0 cpu_count=1
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -15,7 +15,7 @@ while [[ $# -gt 0 ]]; do
     *) usage >&2; exit 2;;
   esac
 done
-[[ $profile == asia || $profile == overseas ]] || { usage >&2; exit 2; }
+[[ $profile == asia || $profile == overseas || $profile == global ]] || { usage >&2; exit 2; }
 [[ $bandwidth =~ ^[0-9]+$ && $bandwidth -gt 0 && $ram_mb =~ ^[0-9]+$ && $ram_mb -gt 0 && $cpu_count =~ ^[0-9]+$ && $cpu_count -gt 0 ]] || { usage >&2; exit 2; }
 load_validate >/dev/null
 
