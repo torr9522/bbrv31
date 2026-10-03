@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-TARGET_VERSION=${BBRV3_VERSION:-v0.1.9}
+TARGET_VERSION=${BBRV3_VERSION:-v0.1.10}
 REPOSITORY=${BBRV3_REPOSITORY:-torr9522/bbrv31}
 INSTALL_DIR=${BBRV3_INSTALL_DIR:-/opt/bbrv3-universal}
 ARCHIVE_NAME="bbrv3-universal-${TARGET_VERSION}-source.tar.zst"
