@@ -12,12 +12,28 @@ kernel_set_persistent_default() {
     local entry=$1 d=${2:-$BBRV3_KERNEL_STATE_ROOT}
     local defaults=${BBRV3_GRUB_DEFAULT_FILE:-/etc/default/grub}
     local grubenv=${BBRV3_GRUB_ENV_FILE:-/boot/grub/grubenv}
-    local current_defaults current_grubenv candidate
+    local formal=${BBRV3_FORMAL_KERNEL:-6.18.54-x64v3-xanmod1}
+    local current_default saved_entry current_defaults current_grubenv candidate
+    [[ -r $defaults && -r $grubenv ]] || return 1
+    mkdir -p "$d"
+    current_default=$(sed -n 's/^GRUB_DEFAULT=//p' "$defaults" | head -1)
+    if [[ $current_default == *"$formal"* ]]; then
+        printf '%s\n' "$entry" >"$d/persistent-boot-entry"
+        printf PERSISTENT_READY >"$d/boot-state"
+        return 0
+    fi
+    if [[ $current_default == saved ]]; then
+        command -v grub-editenv >/dev/null 2>&1 || return 1
+        saved_entry=$(grub-editenv "$grubenv" list 2>/dev/null | sed -n 's/^saved_entry=//p' | head -1)
+        if [[ $saved_entry == "$entry" ]]; then
+            printf '%s\n' "$entry" >"$d/persistent-boot-entry"
+            printf PERSISTENT_READY >"$d/boot-state"
+            return 0
+        fi
+    fi
     command -v update-grub >/dev/null 2>&1 || return 1
     command -v grub-set-default >/dev/null 2>&1 || return 1
     command -v grub-editenv >/dev/null 2>&1 || return 1
-    [[ -r $defaults && -r $grubenv ]] || return 1
-    mkdir -p "$d"
     current_defaults=$(mktemp)
     current_grubenv=$(mktemp)
     candidate=$(mktemp)
@@ -46,7 +62,7 @@ kernel_set_persistent_default() {
     printf PERSISTENT_READY >"$d/boot-state"
     rm -f "$current_defaults" "$current_grubenv" "$candidate"
 }
-kernel_find_xanmod_entry() { sed -n "s/^[[:space:]]*menuentry .*'\\([^']*xanmod[^']*\\)'.*/\\1/p" /boot/grub/grub.cfg 2>/dev/null | head -1; }
+kernel_find_xanmod_entry() { local cfg=${BBRV3_GRUB_CFG:-/boot/grub/grub.cfg}; sed -n "s/^[[:space:]]*menuentry .*'\\([^']*xanmod[^']*\\)'.*/\\1/p" "$cfg" 2>/dev/null | head -1; }
 kernel_protect_fallback() { local d=${1:-$BBRV3_KERNEL_STATE_ROOT}; [[ -s "$d/fallback-kernels.tsv" ]] || kernel_capture_fallback "$d"; }
 kernel_install_package() { local pkg=$1 d=${2:-$BBRV3_KERNEL_STATE_ROOT} entry; kernel_preflight; mkdir -p "$d"; kernel_capture_fallback "$d" || return 6; dpkg-deb --info "$pkg" >"$d/package.info"; sha256sum "$pkg" >"$d/package.sha256"; dpkg -i "$pkg"; update-initramfs -u -k all; update-grub; kernel_protect_fallback "$d"; entry=$(kernel_find_xanmod_entry || true); [[ -n $entry ]] || return 7; kernel_set_one_shot "$entry" "$d"; printf '%s\n' "$entry" >"$d/boot-entry"; printf INSTALLED >"$d/state"; }
 kernel_update_package() { kernel_install_package "$@"; }
